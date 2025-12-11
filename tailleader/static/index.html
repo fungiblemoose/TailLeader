@@ -32,6 +32,51 @@
       .section-header a:hover::after {
         transform: translateX(2px);
       }
+      footer {
+        margin-top: 60px;
+        padding-top: 20px;
+        border-top: 1px solid #334155;
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      footer button, footer a {
+        padding: 8px 16px;
+        background: #0f172a;
+        color: #e5e7eb;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-size: 14px;
+      }
+      footer button:hover, footer a:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+      }
+      footer button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .footer-divider {
+        width: 1px;
+        height: 20px;
+        background: #334155;
+      }
+      @media (max-width: 768px) {
+        footer {
+          font-size: 12px;
+          gap: 8px;
+        }
+        footer button, footer a {
+          padding: 6px 12px;
+          font-size: 12px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -107,9 +152,62 @@
             </table>
           </div>
         </section>
+
+        <footer>
+          <button id="restartServiceBtn" onclick="restartService()">🔄 Restart Service</button>
+          <button id="restartPiBtn" onclick="restartPi()">⚡ Restart Pi</button>
+          <div class="footer-divider"></div>
+          <a href="https://github.com/fungiblemoose/TailLeader" target="_blank" rel="noopener">📦 GitHub</a>
+        </footer>
       </main>
     </div>
 
     <script src="/static/app.js"></script>
+    <script>
+      async function restartService() {
+        if (!confirm('Are you sure you want to restart the TailLeader service?')) return;
+        const btn = document.getElementById('restartServiceBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Restarting...';
+        try {
+          const res = await fetch('/api/restart_service', { method: 'POST' });
+          const data = await res.json();
+          if (data.status === 'success') {
+            alert('Service restart initiated. Page will refresh in a moment...');
+            setTimeout(() => location.reload(), 2000);
+          } else {
+            alert('Error: ' + data.message);
+            btn.disabled = false;
+            btn.textContent = '🔄 Restart Service';
+          }
+        } catch (e) {
+          alert('Error: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = '🔄 Restart Service';
+        }
+      }
+
+      async function restartPi() {
+        if (!confirm('Are you sure you want to restart the Pi? You will lose connection.')) return;
+        const btn = document.getElementById('restartPiBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Rebooting...';
+        try {
+          const res = await fetch('/api/restart_pi', { method: 'POST' });
+          const data = await res.json();
+          if (data.status === 'success') {
+            alert('Pi restart initiated. It will be offline for ~1 minute.');
+          } else {
+            alert('Error: ' + data.message);
+            btn.disabled = false;
+            btn.textContent = '⚡ Restart Pi';
+          }
+        } catch (e) {
+          alert('Error: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = '⚡ Restart Pi';
+        }
+      }
+    </script>
   </body>
 </html>

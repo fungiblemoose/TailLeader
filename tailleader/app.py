@@ -132,6 +132,26 @@ async def api_lookup_stats():
     pending = sum(1 for _, (reg, *_rest) in seen_aircraft.items() if not reg)
     return {"known": known, "pending": pending}
 
+@app.post("/api/restart_service")
+async def restart_service():
+    """Restart the tailleader systemd service"""
+    import subprocess
+    try:
+        subprocess.run(["sudo", "systemctl", "restart", "tailleader.service"], check=True)
+        return {"status": "success", "message": "Service restart initiated"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/restart_pi")
+async def restart_pi():
+    """Restart the Raspberry Pi"""
+    import subprocess
+    try:
+        subprocess.run(["sudo", "shutdown", "-r", "now"], check=True)
+        return {"status": "success", "message": "Pi restart initiated"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 # Static frontend
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
