@@ -1,0 +1,10 @@
+feeder:
+  mode: http # http | file
+  url: "http://127.0.0.1/dump1090-fa/data/aircraft.json"
+  path: "/run/readsb/aircraft.json"
+  interval_seconds: 10
+
+server:
+  host: "0.0.0.0"
+  port: 8088
+  data_dir: "./data"

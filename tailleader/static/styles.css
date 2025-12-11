@@ -1,0 +1,405 @@
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --border: #475569;
+  --success: #10b981;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+  border-radius: 0 0 8px 8px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.lookup-status {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.header-content h1 {
+  margin: 0 0 4px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+/* System Stats */
+.system-stats {
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.stat-value {
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 45px;
+}
+
+/* Filter Buttons */
+.filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filters button {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filters button:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filters button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* Main Content */
+main {
+  padding-bottom: 32px;
+}
+
+section {
+  margin-bottom: 32px;
+}
+
+/* Section Headers */
+.section-header {
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* Chart Section */
+.chart-wrapper {
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+canvas {
+  max-height: 400px;
+  width: 100%;
+}
+
+/* Table Section */
+.table-wrapper {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+thead {
+  background: var(--bg-tertiary);
+  position: sticky;
+  top: 0;
+}
+
+th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+tbody tr:last-child {
+  border-bottom: none;
+}
+
+td {
+  padding: 12px 16px;
+  color: var(--text-primary);
+}
+
+/* Zebra striping for better readability */
+tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+tbody tr:nth-child(even):hover {
+  background: var(--bg-tertiary);
+}
+
+/* Column-specific styling */
+td:nth-child(1) { /* Time */
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+td:nth-child(3) { /* Registration */
+  font-weight: 600;
+  color: var(--accent);
+  font-family: "Courier New", monospace;
+}
+
+/* Make table links readable on dark background */
+table a {
+  color: #93c5fd; /* light blue for contrast */
+  text-decoration: none;
+  font-weight: 600;
+}
+
+table a:hover {
+  color: #bfdbfe; /* brighter on hover */
+  text-decoration: underline;
+}
+
+td:nth-child(4) { /* RSSI */
+  font-family: "Courier New", monospace;
+  color: var(--text-secondary);
+}
+
+td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .header-content h1 {
+    font-size: 24px;
+  }
+
+  .filters {
+    width: 100%;
+    gap: 8px;
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .filters button {
+    flex: 1 1 30%;
+    min-width: 100px;
+    text-align: center;
+  }
+
+  /* Make system stats wrap and reduce size to avoid cutoff */
+  .system-stats {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .lookup-status {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  .stat-value {
+    font-size: 12px;
+    min-width: auto;
+  }
+  .stat-icon {
+    font-size: 14px;
+  }
+
+  table {
+    font-size: 11px;
+  }
+
+  th, td {
+    padding: 8px;
+  }
+
+  /* Reduce chart height and padding for mobile */
+  .chart-wrapper {
+    padding: 12px;
+    min-height: 220px;
+    height: 220px;
+  }
+
+  canvas {
+    max-height: 200px;
+  }
+
+  /* Hide the map section entirely on mobile (header + map) */
+  .map-section {
+    display: none;
+  }
+
+  /* Make tables horizontally scrollable on small screens */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure section headers don't wrap awkwardly */
+  .section-header h2 {
+    font-size: 18px;
+  }
+  .section-meta {
+    font-size: 11px;
+  }
+}
+
+/* Map Section */
+#map {
+  height: 500px;
+  width: 100%;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  z-index: 1;
+}
+
+.leaflet-container {
+  background: #1a1a2e !important;
+  border-radius: 8px;
+}
+
+/* Custom aircraft markers */
+.aircraft-marker {
+  background: transparent !important;
+  border: none !important;
+  filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.8));
+}
+
+.aircraft-marker svg {
+  display: block;
+}
+
+.leaflet-tooltip {
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.aircraft-marker {
+  cursor: pointer;
+}
+
+.aircraft-marker:hover svg {
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 1));
+}

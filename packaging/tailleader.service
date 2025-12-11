@@ -1,0 +1,17 @@
+[Unit]
+Description=TailLeader FastAPI Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/tailleader
+ExecStart=/usr/bin/env bash -lc "PYTHONPATH=/home/pi/.local/lib/python3.13/site-packages /usr/bin/python3 -m uvicorn tailleader.app:app --host 0.0.0.0 --port 8088"
+Restart=always
+RestartSec=3
+MemoryMax=500M
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

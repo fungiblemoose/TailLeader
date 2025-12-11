@@ -1,0 +1,11 @@
+services:
+  tailleader:
+    build: .
+    ports:
+      - "8088:8088"
+    restart: unless-stopped
+    environment:
+      - FEED_MODE=file
+      - FEED_PATH=/run/adsbexchange-feed/aircraft.json
+    volumes:
+      - ./data:/app/data

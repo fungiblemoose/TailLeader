@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TailLeader</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-content">
+          <h1>✈️ TailLeader</h1>
+          <p class="subtitle">ADS-B Aircraft Frequency Tracker</p>
+        </div>
+        <div class="header-right">
+          <div class="system-stats" id="systemStats">
+            <div class="stat">
+              <span class="stat-icon">🌡️</span>
+              <span class="stat-value" id="tempStat">--°C</span>
+            </div>
+            <div class="stat">
+              <span class="stat-icon">💾</span>
+              <span class="stat-value" id="ramStat">--%</span>
+            </div>
+            <div class="stat">
+              <span class="stat-icon">⚡</span>
+              <span class="stat-value" id="cpuStat">--%</span>
+            </div>
+          </div>
+          <div class="lookup-status" id="lookupStatus" title="Tail lookup status">
+            <span id="lookupKnown">0</span> tails • <span id="lookupPending">0</span> pending
+          </div>
+          <div class="filters">
+            <button data-window="24h" class="active">Last 24h</button>
+            <button data-window="30d">Last 30d</button>
+            <button data-window="all">All-time</button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="map-section">
+          <div class="section-header">
+            <h2>Live Aircraft Map</h2>
+            <p class="section-meta">Currently visible aircraft positions</p>
+          </div>
+          <div id="map"></div>
+        </section>
+
+        <section class="chart-section">
+          <div class="section-header">
+            <h2>Top Registrations</h2>
+            <p class="section-meta">Most frequently observed aircraft</p>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="topChart"></canvas>
+          </div>
+        </section>
+
+        <section class="table-section">
+          <div class="section-header">
+            <h2>Recent Sightings</h2>
+            <p class="section-meta">Latest 50 aircraft detections</p>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Hex</th>
+                  <th>Registration</th>
+                  <th>RSSI (dBm)</th>
+                  <th>Latitude</th>
+                  <th>Longitude</th>
+                </tr>
+              </thead>
+              <tbody id="recentBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

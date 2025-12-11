@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Env/venv
+.venv/
+.env
+
+# Data
+data/
+*.sqlite
+
+# Logs
+*.log
+/tmp/
