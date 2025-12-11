@@ -7,6 +7,30 @@ TailLeader is a lightweight FastAPI app for tracking ADS-B aircraft tail numbers
 - Registry: Resolves tails via ADSBdb and caches hex→registration
 - Frontend: Vanilla JS + Chart.js + Leaflet
 
+## Requirements
+
+TailLeader requires an **ADS-B receiver** feeding aircraft data. It reads from a JSON file written by feeder software like:
+- **dump1090** (FlightAware, Mutability, or FA version)
+- **readsb** (modern dump1090 fork)
+- **tar1090** (includes readsb)
+- **ADSBx feeder** (adsbexchange-feed package)
+
+**Default data path**: `/run/adsbexchange-feed/aircraft.json`
+
+Common paths for other feeders:
+- FlightAware: `/run/dump1090-fa/aircraft.json`
+- Readsb: `/run/readsb/aircraft.json`
+- tar1090: `/run/tar1090/aircraft.json`
+
+Edit `config.yaml` or `.env` to change the path:
+```yaml
+feeder:
+  mode: file
+  path: /run/dump1090-fa/aircraft.json
+```
+
+**Hardware**: Any Raspberry Pi with an RTL-SDR or similar ADS-B receiver. TailLeader itself is lightweight and works alongside existing feeders.
+
 ## Quick Start (Raspberry Pi)
 
 ```bash
@@ -54,4 +78,4 @@ docker compose up -d
 - APIs: /api/top, /api/recent, /api/live, /api/stats, /api/lookup_stats
 
 ## License
-Add your preferred license in LICENSE.
+MIT License - see LICENSE file.
