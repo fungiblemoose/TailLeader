@@ -35,20 +35,46 @@ async def api_top(window: str = Query("24h", pattern="^(24h|30d|all)$"), limit: 
     return await top_registrations(db_path, window, limit)
 
 @app.get("/api/all_registrations")
-async def api_all_registrations():
-    """Return all registrations ever seen, ranked by frequency"""
+async def api_all_registrations(window: str = Query("all", pattern="^(24h|30d|all)$")):
+    """Return all registrations for a given time window, ranked by frequency"""
     import aiosqlite
     async with aiosqlite.connect(db_path) as db:
-        q = (
-            "SELECT ar.registration as tail, COUNT(*) as c "
-            "FROM events e "
-            "JOIN aircraft_registry ar ON e.hex = ar.hex "
-            "WHERE ar.registration IS NOT NULL "
-            "GROUP BY ar.registration ORDER BY c DESC"
-        )
-        async with db.execute(q) as cur:
-            rows = await cur.fetchall()
-            return [dict(rank=i+1, registration=tail, count=c) for i, (tail, c) in enumerate(rows)]
+        if window == "24h":
+            import time
+            since = int(time.time()) - 24 * 3600
+            q = (
+                "SELECT ar.registration as tail, COUNT(*) as c "
+                "FROM events e "
+                "JOIN aircraft_registry ar ON e.hex = ar.hex "
+                "WHERE e.observed_at >= ? AND ar.registration IS NOT NULL "
+                "GROUP BY ar.registration ORDER BY c DESC"
+            )
+            async with db.execute(q, (since,)) as cur:
+                rows = await cur.fetchall()
+        elif window == "30d":
+            import time
+            since = int(time.time()) - 30 * 24 * 3600
+            q = (
+                "SELECT ar.registration as tail, COUNT(*) as c "
+                "FROM events e "
+                "JOIN aircraft_registry ar ON e.hex = ar.hex "
+                "WHERE e.observed_at >= ? AND ar.registration IS NOT NULL "
+                "GROUP BY ar.registration ORDER BY c DESC"
+            )
+            async with db.execute(q, (since,)) as cur:
+                rows = await cur.fetchall()
+        else:  # all
+            q = (
+                "SELECT ar.registration as tail, COUNT(*) as c "
+                "FROM events e "
+                "JOIN aircraft_registry ar ON e.hex = ar.hex "
+                "WHERE ar.registration IS NOT NULL "
+                "GROUP BY ar.registration ORDER BY c DESC"
+            )
+            async with db.execute(q) as cur:
+                rows = await cur.fetchall()
+        
+        return [dict(rank=i+1, registration=tail, count=c) for i, (tail, c) in enumerate(rows)]
 
 @app.get("/api/recent")
 async def api_recent(limit: int = 50):

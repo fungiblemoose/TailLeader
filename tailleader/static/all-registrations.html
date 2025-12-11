@@ -69,6 +69,7 @@
         gap: 24px;
         margin: 20px 0;
         flex-wrap: wrap;
+        align-items: center;
       }
       .stats-summary .stat {
         background: #1e293b;
@@ -87,6 +88,30 @@
         color: #94a3b8;
         margin-top: 4px;
       }
+      .filters {
+        display: flex;
+        gap: 8px;
+        margin-left: auto;
+      }
+      .filters button {
+        padding: 8px 16px;
+        background: #0f172a;
+        color: #e5e7eb;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .filters button:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+      }
+      .filters button.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+      }
       .no-results {
         text-align: center;
         padding: 40px;
@@ -100,6 +125,14 @@
         }
         .reg-card {
           padding: 12px;
+        }
+        .stats-summary {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .filters {
+          margin-left: 0;
+          width: 100%;
         }
       }
     </style>
@@ -125,6 +158,11 @@
             <span class="stat-value" id="totalObservations">0</span>
             <span class="stat-label">Total Observations</span>
           </div>
+          <div class="filters">
+            <button data-window="24h">Last 24h</button>
+            <button data-window="30d">Last 30d</button>
+            <button data-window="all" class="active">All-time</button>
+          </div>
         </div>
 
         <input 
@@ -140,9 +178,10 @@
 
     <script>
       let allRegistrations = [];
+      let currentWindow = 'all';
 
-      async function fetchAllRegistrations() {
-        const res = await fetch('/api/all_registrations');
+      async function fetchAllRegistrations(window = 'all') {
+        const res = await fetch(`/api/all_registrations?window=${window}`);
         allRegistrations = await res.json();
         renderRegistrations(allRegistrations);
         updateStats(allRegistrations);
@@ -189,8 +228,19 @@
         }
       });
 
+      // Window filter buttons
+      document.querySelectorAll('.filters button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentWindow = btn.dataset.window;
+          document.getElementById('searchBox').value = '';
+          fetchAllRegistrations(currentWindow);
+        });
+      });
+
       // Initialize
-      fetchAllRegistrations();
+      fetchAllRegistrations('all');
     </script>
   </body>
 </html>
