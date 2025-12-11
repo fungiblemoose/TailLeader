@@ -1,0 +1,15 @@
+[Unit]
+Description=TailLeader ADS-B Logger (FastAPI)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/tailleader
+Environment=TL_CONFIG=/home/pi/tailleader/tailleader/config.yaml
+ExecStart=/usr/bin/python3 -m uvicorn tailleader.app:app --host 0.0.0.0 --port 8088
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target
