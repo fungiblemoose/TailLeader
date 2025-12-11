@@ -132,6 +132,34 @@ async def api_lookup_stats():
     pending = sum(1 for _, (reg, *_rest) in seen_aircraft.items() if not reg)
     return {"known": known, "pending": pending}
 
+@app.get("/api/feed_status")
+async def api_feed_status():
+    """Check status of connected feed services"""
+    import subprocess
+    import json
+    
+    services = {
+        "fr24": "fr24feed.service",
+        "piaware": "piaware.service",
+        "adsbexchange": "adsbexchange-feed.service",
+    }
+    
+    status = {}
+    for name, service in services.items():
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-active", service],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            is_active = result.stdout.strip() == "active"
+            status[name] = {"online": is_active}
+        except Exception as e:
+            status[name] = {"online": False}
+    
+    return status
+
 @app.post("/api/restart_service")
 async def restart_service():
     """Restart the tailleader systemd service"""

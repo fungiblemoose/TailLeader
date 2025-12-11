@@ -32,6 +32,41 @@
       .section-header a:hover::after {
         transform: translateX(2px);
       }
+      .feed-status {
+        display: flex;
+        gap: 12px;
+        padding: 8px 16px;
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+      .feed-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #e5e7eb;
+      }
+      .feed-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      .feed-dot.online {
+        background: #10b981;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+      }
+      .feed-dot.offline {
+        background: #ef4444;
+        opacity: 0.6;
+        animation: none;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+      }
       footer {
         margin-top: 60px;
         padding-top: 20px;
@@ -68,6 +103,14 @@
         background: #334155;
       }
       @media (max-width: 768px) {
+        .feed-status {
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 6px 10px;
+        }
+        .feed-item {
+          font-size: 11px;
+        }
         footer {
           font-size: 12px;
           gap: 8px;
@@ -101,6 +144,7 @@
               <span class="stat-value" id="cpuStat">--%</span>
             </div>
           </div>
+          <div class="feed-status" id="feedStatus" title="Feed service status"></div>
           <div class="lookup-status" id="lookupStatus" title="Tail lookup status">
             <span id="lookupKnown">0</span> tails • <span id="lookupPending">0</span> pending
           </div>
@@ -164,6 +208,27 @@
 
     <script src="/static/app.js"></script>
     <script>
+      async function refreshFeedStatus() {
+        try {
+          const res = await fetch('/api/feed_status');
+          const status = await res.json();
+          const feedStatusEl = document.getElementById('feedStatus');
+          
+          feedStatusEl.innerHTML = Object.entries(status).map(([name, data]) => {
+            const dotClass = data.online ? 'online' : 'offline';
+            const platformName = name.charAt(0).toUpperCase() + name.slice(1);
+            return `
+              <div class="feed-item">
+                <div class="feed-dot ${dotClass}"></div>
+                <span>${platformName}</span>
+              </div>
+            `;
+          }).join('');
+        } catch (e) {
+          console.log('Feed status check failed:', e);
+        }
+      }
+
       async function restartService() {
         if (!confirm('Are you sure you want to restart the TailLeader service?')) return;
         const btn = document.getElementById('restartServiceBtn');
@@ -208,6 +273,11 @@
           btn.textContent = '⚡ Restart Pi';
         }
       }
+
+      // Initial feed status check
+      refreshFeedStatus();
+      // Refresh feed status every 30 seconds
+      setInterval(refreshFeedStatus, 30000);
     </script>
   </body>
 </html>
