@@ -95,11 +95,6 @@ station:
   name: "My ADS-B Station"
 ```
 
-The marker shows:
-- **Neon green glow** for maximum visibility  
-- **House icon** (16x16) to distinguish it from aircraft markers
-- **Popup label** when clicked
-
 Restart the service to apply changes:
 ```bash
 sudo systemctl restart tailleader.service
