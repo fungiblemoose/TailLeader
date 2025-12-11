@@ -8,6 +8,31 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+      .section-header a {
+        color: inherit;
+        text-decoration: underline;
+        text-decoration-color: #3b82f6;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 6px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .section-header a:hover {
+        color: #3b82f6;
+        text-decoration-color: #1e40af;
+      }
+      .section-header a::after {
+        content: '→';
+        font-weight: 700;
+        transition: transform 0.2s;
+      }
+      .section-header a:hover::after {
+        transform: translateX(2px);
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -53,7 +78,7 @@
 
         <section class="chart-section">
           <div class="section-header">
-            <h2>Top Registrations</h2>
+            <h2><a href="/all-registrations">Top Registrations</a></h2>
             <p class="section-meta">Most frequently observed aircraft</p>
           </div>
           <div class="chart-wrapper">

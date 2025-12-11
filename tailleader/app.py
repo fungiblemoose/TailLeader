@@ -34,6 +34,22 @@ async def startup():
 async def api_top(window: str = Query("24h", pattern="^(24h|30d|all)$"), limit: int = 20):
     return await top_registrations(db_path, window, limit)
 
+@app.get("/api/all_registrations")
+async def api_all_registrations():
+    """Return all registrations ever seen, ranked by frequency"""
+    import aiosqlite
+    async with aiosqlite.connect(db_path) as db:
+        q = (
+            "SELECT ar.registration as tail, COUNT(*) as c "
+            "FROM events e "
+            "JOIN aircraft_registry ar ON e.hex = ar.hex "
+            "WHERE ar.registration IS NOT NULL "
+            "GROUP BY ar.registration ORDER BY c DESC"
+        )
+        async with db.execute(q) as cur:
+            rows = await cur.fetchall()
+            return [dict(rank=i+1, registration=tail, count=c) for i, (tail, c) in enumerate(rows)]
+
 @app.get("/api/recent")
 async def api_recent(limit: int = 50):
     return await recent_events(db_path, limit)
@@ -97,3 +113,7 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 @app.get("/")
 async def index():
     return FileResponse(os.path.join(static_dir, "index.html"))
+
+@app.get("/all-registrations")
+async def all_registrations_page():
+    return FileResponse(os.path.join(static_dir, "all-registrations.html"))

@@ -176,7 +176,7 @@ function updateMap(aircraft) {
       marker.registration = ac.registration;
       marker.track = rotation;
       
-      // Add click handler for marker
+      // Add click handler for marker - goes to live map page
       marker.on('click', () => {
         if (ac.registration) {
           const trimmed = ac.registration.trim().toUpperCase();
@@ -227,21 +227,26 @@ function updateMap(aircraft) {
 }
 
 function renderChart(data) {
-  const labels = data.map(d => d.registration || 'UNKNOWN');
-  const counts = data.map(d => d.count);
+  const isMobile = window.innerWidth <= 768;
+  
+  // On mobile, only show top 5
+  const displayData = isMobile ? data.slice(0, 5) : data;
+  
+  const labels = displayData.map(d => d.registration || 'UNKNOWN');
+  const counts = displayData.map(d => d.count);
   const ctx = document.getElementById('topChart');
   if (!ctx) return;
   if (chart) chart.destroy();
-  const isMobile = window.innerWidth <= 768;
+  
   chart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: labels,
-      datasets: [{ label: 'Top aircraft (tails)', data: counts, maxBarThickness: isMobile ? 20 : 36 }]
+      datasets: [{ label: 'Top aircraft (tails)', data: counts, maxBarThickness: isMobile ? 50 : 36 }]
     },
     options: { 
       responsive: true,
-      indexAxis: isMobile ? 'y' : 'x',
+      indexAxis: 'x', // Always vertical bars now
       maintainAspectRatio: false,
       layout: { padding: { left: isMobile ? 6 : 12, right: isMobile ? 6 : 12 } },
       onClick: (event, elements) => {
@@ -249,9 +254,8 @@ function renderChart(data) {
           const index = elements[0].index;
           const label = labels[index];
           const trimmed = label.trim().toUpperCase();
-          // Prefer tail-number linking; fallback to flight
-          const isTail = /^N[0-9A-Z]+$|^[A-Z]{2}-?[A-Z0-9]+$/i.test(trimmed);
-          const url = `https://www.flightradar24.com/${trimmed}`;
+          // Open aircraft data lookup page (not live map)
+          const url = `https://www.flightradar24.com/data/aircraft/${trimmed.toLowerCase()}`;
           window.open(url, '_blank');
         }
       },
@@ -261,17 +265,21 @@ function renderChart(data) {
       },
       scales: {
         x: { 
-          ticks: { display: !isMobile, color: '#e5e7eb', maxTicksLimit: isMobile ? 5 : undefined, callback: isMobile ? () => '' : (v) => labels[v] || v },
+          ticks: { 
+            color: '#e5e7eb',
+            autoSkip: false,
+            maxRotation: 45,
+            minRotation: 45
+          },
           grid: { display: false }
         },
         y: {
           ticks: {
             color: '#e5e7eb',
-            autoSkip: false,
-            maxTicksLimit: undefined,
             stepSize: 1,
             callback: (value) => Number.isInteger(value) ? value : ''
-          }
+          },
+          grid: { color: 'rgba(255, 255, 255, 0.1)' }
         }
       }
     }
@@ -288,7 +296,8 @@ function renderRecent(rows) {
     const tail = r.tail || r.registration || '';
     const trimmed = tail.trim().toUpperCase();
     const isTail = /^N[0-9A-Z]+$|^[A-Z]{2}-?[A-Z0-9]+$/i.test(trimmed);
-    const url = tail ? `https://www.flightradar24.com/${trimmed}` : '';
+    // Link to live map page for recent sightings
+    const url = tail ? `https://www.flightradar24.com/${trimmed.toLowerCase()}` : '';
     tr.innerHTML = `
       <td>${t}</td>
       <td>${r.hex}</td>

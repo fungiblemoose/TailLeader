@@ -1,0 +1,196 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>All Registrations - TailLeader</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <style>
+      .search-box {
+        margin: 20px 0;
+        padding: 12px;
+        width: 100%;
+        max-width: 400px;
+        font-size: 16px;
+        border: 2px solid #3b82f6;
+        border-radius: 8px;
+        background: #1e293b;
+        color: #e5e7eb;
+      }
+      .search-box::placeholder {
+        color: #64748b;
+      }
+      .registrations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .reg-card {
+        background: #1e293b;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .reg-card:hover {
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+      .reg-rank {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 600;
+      }
+      .reg-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: #e5e7eb;
+        margin: 8px 0;
+      }
+      .reg-count {
+        font-size: 14px;
+        color: #94a3b8;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .stats-summary {
+        display: flex;
+        gap: 24px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+      .stats-summary .stat {
+        background: #1e293b;
+        padding: 16px 24px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+      }
+      .stats-summary .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #3b82f6;
+        display: block;
+      }
+      .stats-summary .stat-label {
+        font-size: 14px;
+        color: #94a3b8;
+        margin-top: 4px;
+      }
+      .no-results {
+        text-align: center;
+        padding: 40px;
+        color: #64748b;
+        font-size: 16px;
+      }
+      @media (max-width: 768px) {
+        .registrations-grid {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 8px;
+        }
+        .reg-card {
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-content">
+          <h1>✈️ TailLeader</h1>
+          <p class="subtitle">All Registrations</p>
+        </div>
+      </header>
+
+      <main>
+        <a href="/" class="back-link">← Back to Dashboard</a>
+        
+        <div class="stats-summary">
+          <div class="stat">
+            <span class="stat-value" id="totalCount">0</span>
+            <span class="stat-label">Total Registrations</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="totalObservations">0</span>
+            <span class="stat-label">Total Observations</span>
+          </div>
+        </div>
+
+        <input 
+          type="text" 
+          class="search-box" 
+          id="searchBox" 
+          placeholder="Search registration (e.g., N12345)..."
+        />
+
+        <div class="registrations-grid" id="registrationsGrid"></div>
+      </main>
+    </div>
+
+    <script>
+      let allRegistrations = [];
+
+      async function fetchAllRegistrations() {
+        const res = await fetch('/api/all_registrations');
+        allRegistrations = await res.json();
+        renderRegistrations(allRegistrations);
+        updateStats(allRegistrations);
+      }
+
+      function updateStats(data) {
+        document.getElementById('totalCount').textContent = data.length;
+        const totalObs = data.reduce((sum, r) => sum + r.count, 0);
+        document.getElementById('totalObservations').textContent = totalObs.toLocaleString();
+      }
+
+      function renderRegistrations(data) {
+        const grid = document.getElementById('registrationsGrid');
+        if (data.length === 0) {
+          grid.innerHTML = '<div class="no-results">No registrations found</div>';
+          return;
+        }
+
+        grid.innerHTML = data.map(r => `
+          <div class="reg-card" onclick="openAircraftData('${r.registration}')">
+            <div class="reg-rank">#${r.rank}</div>
+            <div class="reg-name">${r.registration}</div>
+            <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
+          </div>
+        `).join('');
+      }
+
+      function openAircraftData(registration) {
+        const trimmed = registration.trim().toUpperCase();
+        const url = `https://www.flightradar24.com/data/aircraft/${trimmed.toLowerCase()}`;
+        window.open(url, '_blank');
+      }
+
+      // Search functionality
+      document.getElementById('searchBox').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (query === '') {
+          renderRegistrations(allRegistrations);
+        } else {
+          const filtered = allRegistrations.filter(r => 
+            r.registration.toLowerCase().includes(query)
+          );
+          renderRegistrations(filtered);
+        }
+      });
+
+      // Initialize
+      fetchAllRegistrations();
+    </script>
+  </body>
+</html>
