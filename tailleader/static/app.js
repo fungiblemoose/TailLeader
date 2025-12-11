@@ -167,8 +167,8 @@ function updateMap(aircraft) {
       // Create new marker as a plane icon (rotation will be applied separately)
       const icon = L.divIcon({
         className: 'aircraft-marker',
-        html: `<div style="width:20px;height:20px;"><svg width="20" height="20" viewBox="0 0 20 20" style="transform: rotate(${rotation}deg); transform-origin: center;"><path d="M10 2 L11 7 L16 8 L17 9 L11 10 L11 15 L13 17 L13 18 L10 17 L7 18 L7 17 L9 15 L9 10 L3 9 L4 8 L9 7 L10 2 Z" fill="#3b82f6" stroke="#fff" stroke-width="0.8"/></svg></div>`,
-        iconSize: [20, 20],
+        html: `<div style="width:20px;height:20px;"><svg width="16" height="16" viewBox="0 0 20 20" style="transform: rotate(${rotation}deg); transform-origin: center;"><path d="M10 2 L11 7 L16 8 L17 9 L11 10 L11 15 L13 17 L13 18 L10 17 L7 18 L7 17 L9 15 L9 10 L3 9 L4 8 L9 7 L10 2 Z" fill="#3b82f6" stroke="#fff" stroke-width="0.8"/></svg></div>`,
+        iconSize: [16, 16],
         iconAnchor: [10, 10]
       });
       
@@ -337,6 +337,7 @@ document.querySelectorAll('.filters button').forEach(btn => {
 
 // Initialize
 initMap();
+addStationMarker();
 refresh();
 refreshMap();
 refreshStats();
@@ -347,3 +348,47 @@ setInterval(refresh, 15000);
 setInterval(refreshMap, 3000); // Update map more frequently for smooth movement
 setInterval(refreshStats, 5000); // Update system stats every 5 seconds
 setInterval(refreshLookupStatus, 7000); // Update lookup status periodically
+
+async function addStationMarker() {
+  try {
+    const stationRes = await fetch('/api/station');
+    const station = await stationRes.json();
+    
+    if (station.latitude && station.longitude) {
+      // Create a neon green SVG house icon
+      const houseIcon = L.divIcon({
+        html: `
+          <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="neon-glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <rect x="6" y="12" width="20" height="16" fill="#39ff14" filter="url(#neon-glow)" stroke="#00cc00" stroke-width="1.5" rx="2"/>
+            <polygon points="6,12 16,2 26,12" fill="none" stroke="#39ff14" stroke-width="2" stroke-linejoin="round" filter="url(#neon-glow)"/>
+            <rect x="14" y="16" width="4" height="8" fill="#00cc00" stroke="#39ff14" stroke-width="1" rx="1"/>
+            <circle cx="17.5" cy="20" r="0.8" fill="#39ff14"/>
+            <rect x="8" y="14" width="3" height="3" fill="#39ff14" opacity="0.7" rx="0.5"/>
+          </svg>
+        `,
+        iconSize: [16, 16],
+        iconAnchor: [8, 16],
+        popupAnchor: [0, -16],
+        className: 'station-marker'
+      });
+      
+      const stationMarker = L.marker([station.latitude, station.longitude], {
+        icon: houseIcon,
+        title: station.name
+      }).addTo(map);
+      
+      stationMarker.bindPopup(`<div style="text-align: center; font-weight: bold; color: #39ff14;">${station.name}</div>`);
+    }
+  } catch (e) {
+    console.log('Could not load station marker:', e);
+  }
+}

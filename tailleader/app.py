@@ -160,6 +160,34 @@ async def api_feed_status():
     
     return status
 
+
+@app.get("/api/station")
+async def api_station():
+    """Return feeder station location"""
+    # First try config.yaml
+    station = config.get("station") or {}
+    lat = station.get("latitude")
+    lon = station.get("longitude")
+    
+    # If not in config, try to read from adsbexchange config
+    if not lat or not lon:
+        try:
+            with open('/etc/default/adsbexchange', 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith('LATITUDE='):
+                        lat = float(line.split('=')[1].strip('"'))
+                    elif line.startswith('LONGITUDE='):
+                        lon = float(line.split('=')[1].strip('"'))
+        except:
+            pass
+    
+    return {
+        "latitude": lat,
+        "longitude": lon,
+        "name": (station.get("name") if station else None) or "ADS-B Station"
+    }
+
 @app.post("/api/restart_service")
 async def restart_service():
     """Restart the tailleader systemd service"""

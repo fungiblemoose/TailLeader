@@ -79,3 +79,28 @@ docker compose up -d
 
 ## License
 MIT License - see LICENSE file.
+
+## Feeder Location Marker
+
+The map displays your feeder station location as a small neon green house icon. **The location is automatically detected from your `/etc/default/adsbexchange` configuration**, so no additional setup is needed!
+
+### Custom Location (Optional)
+
+If you want to override the auto-detected location, edit `config.yaml`:
+
+```yaml
+station:
+  latitude: 40.7128      # Your latitude
+  longitude: -74.0060    # Your longitude
+  name: "My ADS-B Station"
+```
+
+The marker shows:
+- **Neon green glow** for maximum visibility  
+- **House icon** (16x16) to distinguish it from aircraft markers
+- **Popup label** when clicked
+
+Restart the service to apply changes:
+```bash
+sudo systemctl restart tailleader.service
+```

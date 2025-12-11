@@ -67,6 +67,141 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.6; }
       }
+      .map-container {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .map-wrapper {
+        flex: 1;
+        min-width: 0;
+      }
+      .status-card {
+        flex: 0 0 auto;
+        width: 200px;
+        height: 500px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        overflow-y: auto;
+      }
+      .status-card-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .status-card-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #94a3b8;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .status-card-content {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .status-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #e5e7eb;
+      }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .status-dot.online {
+        background: #10b981;
+        box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+      }
+      .status-dot.offline {
+        background: #ef4444;
+      }
+      .system-stat-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #e5e7eb;
+      }
+      .system-stat-icon {
+        font-size: 13px;
+        margin-right: 4px;
+      }
+      .pending-badge {
+        display: inline-block;
+        background: #3b82f6;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .status-card-spacer {
+        flex: 1;
+      }
+      .status-card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+      }
+      .status-card-actions button,
+      .status-card-actions a {
+        padding: 6px 8px;
+        background: #0f172a;
+        color: #e5e7eb;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-size: 11px;
+        text-align: center;
+        display: block;
+      }
+      .status-card-actions button:hover,
+      .status-card-actions a:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+      }
+      .status-card-actions button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      @media (max-width: 1200px) {
+        .map-container {
+          flex-direction: column;
+        }
+        .status-card {
+          width: 100%;
+          height: auto;
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+        .status-card-section {
+          flex: 1;
+          min-width: 150px;
+        }
+        .status-card-spacer {
+          display: none;
+        }
+        .status-card-actions {
+          flex: 1 0 100%;
+          border-left: none;
+          border-top: 1px solid var(--border);
+        }
+      }
       footer {
         margin-top: 60px;
         padding-top: 20px;
@@ -103,12 +238,20 @@
         background: #334155;
       }
       @media (max-width: 768px) {
-        .feed-status {
-          flex-wrap: wrap;
-          gap: 8px;
-          padding: 6px 10px;
+        .map-container {
+          flex-direction: column;
         }
-        .feed-item {
+        .status-card {
+          width: 100%;
+          height: auto;
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+        .status-card-section {
+          flex: 1;
+          min-width: 45%;
+        }
+        .system-stat-item {
           font-size: 11px;
         }
         footer {
@@ -130,24 +273,6 @@
           <p class="subtitle">ADS-B Aircraft Frequency Tracker</p>
         </div>
         <div class="header-right">
-          <div class="system-stats" id="systemStats">
-            <div class="stat">
-              <span class="stat-icon">🌡️</span>
-              <span class="stat-value" id="tempStat">--°C</span>
-            </div>
-            <div class="stat">
-              <span class="stat-icon">💾</span>
-              <span class="stat-value" id="ramStat">--%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-icon">⚡</span>
-              <span class="stat-value" id="cpuStat">--%</span>
-            </div>
-          </div>
-          <div class="feed-status" id="feedStatus" title="Feed service status"></div>
-          <div class="lookup-status" id="lookupStatus" title="Tail lookup status">
-            <span id="lookupKnown">0</span> tails • <span id="lookupPending">0</span> pending
-          </div>
           <div class="filters">
             <button data-window="24h" class="active">Last 24h</button>
             <button data-window="30d">Last 30d</button>
@@ -162,7 +287,49 @@
             <h2>Live Aircraft Map</h2>
             <p class="section-meta">Currently visible aircraft positions</p>
           </div>
-          <div id="map"></div>
+          <div class="map-container">
+            <div class="map-wrapper">
+              <div id="map"></div>
+            </div>
+            <div class="status-card">
+              <div class="status-card-section">
+                <div class="status-card-label">Feed Status</div>
+                <div class="status-card-content" id="feedStatusCard"></div>
+              </div>
+              <div class="status-card-section">
+                <div class="status-card-label">System Info</div>
+                <div class="system-stat-item">
+                  <span><span class="system-stat-icon">🌡️</span>Temp</span>
+                  <span id="tempStat">--°C</span>
+                </div>
+                <div class="system-stat-item">
+                  <span><span class="system-stat-icon">💾</span>RAM</span>
+                  <span id="ramStat">--%</span>
+                </div>
+                <div class="system-stat-item">
+                  <span><span class="system-stat-icon">⚡</span>CPU</span>
+                  <span id="cpuStat">--%</span>
+                </div>
+              </div>
+              <div class="status-card-section">
+                <div class="status-card-label">Tail Lookups</div>
+                <div class="system-stat-item">
+                  <span>Known</span>
+                  <span id="lookupKnown">0</span>
+                </div>
+                <div class="system-stat-item">
+                  <span>Pending</span>
+                  <span class="pending-badge" id="lookupPending">0</span>
+                </div>
+              </div>
+              <div class="status-card-spacer"></div>
+              <div class="status-card-actions">
+                <button id="restartServiceBtn" onclick="restartService()">🔄 Restart</button>
+                <button id="restartPiBtn" onclick="restartPi()">⚡ Reboot Pi</button>
+                <a href="https://github.com/fungiblemoose/TailLeader" target="_blank" rel="noopener">📦 GitHub</a>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section class="chart-section">
@@ -196,13 +363,6 @@
             </table>
           </div>
         </section>
-
-        <footer>
-          <button id="restartServiceBtn" onclick="restartService()">🔄 Restart Service</button>
-          <button id="restartPiBtn" onclick="restartPi()">⚡ Restart Pi</button>
-          <div class="footer-divider"></div>
-          <a href="https://github.com/fungiblemoose/TailLeader" target="_blank" rel="noopener">📦 GitHub</a>
-        </footer>
       </main>
     </div>
 
@@ -212,14 +372,14 @@
         try {
           const res = await fetch('/api/feed_status');
           const status = await res.json();
-          const feedStatusEl = document.getElementById('feedStatus');
+          const feedStatusCard = document.getElementById('feedStatusCard');
           
-          feedStatusEl.innerHTML = Object.entries(status).map(([name, data]) => {
+          feedStatusCard.innerHTML = Object.entries(status).map(([name, data]) => {
             const dotClass = data.online ? 'online' : 'offline';
-            const platformName = name.charAt(0).toUpperCase() + name.slice(1);
+            const platformName = name === 'fr24' ? 'FR24' : name === 'piaware' ? 'Piaware' : 'ADSBx';
             return `
-              <div class="feed-item">
-                <div class="feed-dot ${dotClass}"></div>
+              <div class="status-item">
+                <div class="status-dot ${dotClass}"></div>
                 <span>${platformName}</span>
               </div>
             `;
@@ -243,12 +403,12 @@
           } else {
             alert('Error: ' + data.message);
             btn.disabled = false;
-            btn.textContent = '🔄 Restart Service';
+            btn.textContent = '🔄 Restart';
           }
         } catch (e) {
           alert('Error: ' + e.message);
           btn.disabled = false;
-          btn.textContent = '🔄 Restart Service';
+          btn.textContent = '🔄 Restart';
         }
       }
 
@@ -265,12 +425,12 @@
           } else {
             alert('Error: ' + data.message);
             btn.disabled = false;
-            btn.textContent = '⚡ Restart Pi';
+            btn.textContent = '⚡ Reboot Pi';
           }
         } catch (e) {
           alert('Error: ' + e.message);
           btn.disabled = false;
-          btn.textContent = '⚡ Restart Pi';
+          btn.textContent = '⚡ Reboot Pi';
         }
       }
 
