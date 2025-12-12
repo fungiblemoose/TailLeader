@@ -1,0 +1,16 @@
+feeder:
+  mode: file
+  path: "/run/adsbexchange-feed/aircraft.json"
+  interval_seconds: 10
+
+server:
+  host: "0.0.0.0"
+  port: 8088
+  data_dir: "./data"
+
+station:
+  # Station location is automatically detected from /etc/default/adsbexchange
+  # If you want to override it, uncomment and set the values below
+  # latitude: null
+  # longitude: null
+  # name: "My Station"

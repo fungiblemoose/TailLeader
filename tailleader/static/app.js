@@ -362,6 +362,7 @@ document.querySelectorAll('.filters button').forEach(btn => {
 // Initialize
 initMap();
 addStationMarker();
+initMapToggle();
 refresh();
 refreshMap();
 refreshStats();
@@ -411,8 +412,112 @@ async function addStationMarker() {
       }).addTo(map);
       
       stationMarker.bindPopup(`<div style="text-align: center; font-weight: bold; color: #39ff14;">${station.name}</div>`);
+      
+      // Auto-center map on station location with appropriate zoom level
+      console.log('Centering map on station:', { lat: station.latitude, lon: station.longitude });
+      map.setView([station.latitude, station.longitude], 10);
     }
   } catch (e) {
     console.log('Could not load station marker:', e);
   }
+}
+
+function initMapToggle() {
+  const mapToggleBtn = document.getElementById('mapToggleBtn');
+  const mapSection = document.getElementById('mapSection');
+  
+  if (!mapToggleBtn || !mapSection) {
+    console.log('Map toggle elements not found');
+    return;
+  }
+  
+  console.log('initMapToggle: Initializing map toggle button');
+  
+  // Track whether map is currently shown
+  let mapIsShown = false;
+  
+  // Check screen size and show/hide toggle button
+  function checkScreenSize() {
+    const isMobile = window.innerWidth <= 768; // iPad/mobile breakpoint
+    console.log('checkScreenSize:', { isMobile, width: window.innerWidth });
+    if (isMobile) {
+      mapToggleBtn.style.display = 'block';
+      // Hide map by default on mobile
+      if (!mapIsShown) {
+        mapSection.classList.add('hidden-mobile');
+        mapToggleBtn.textContent = '📍 Show Map';
+      }
+    } else {
+      mapToggleBtn.style.display = 'none';
+      // Always show map on desktop
+      mapSection.classList.remove('hidden-mobile');
+      mapIsShown = true;
+    }
+  }
+  
+  // Toggle map visibility
+  function toggleMap() {
+    mapIsShown = !mapIsShown;
+    console.log('Map toggle:', mapIsShown ? 'showing' : 'hiding');
+    
+    if (mapIsShown) {
+      mapSection.classList.remove('hidden-mobile');
+      mapToggleBtn.textContent = '📍 Hide Map';
+    } else {
+      mapSection.classList.add('hidden-mobile');
+      mapToggleBtn.textContent = '📍 Show Map';
+    }
+  }
+  
+  // Simple click handler for desktop
+  mapToggleBtn.addEventListener('click', toggleMap, false);
+  
+  // Touch handler - only respond to actual taps on the button itself
+  let touchIdentifier = null;
+  
+  mapToggleBtn.addEventListener('touchstart', (e) => {
+    // Only track if this is the first touch
+    if (touchIdentifier === null && e.touches.length === 1) {
+      touchIdentifier = e.touches[0].identifier;
+      console.log('Touch started on button');
+    }
+  }, { passive: true });
+  
+  mapToggleBtn.addEventListener('touchend', (e) => {
+    // Only respond if this is the same touch that started on the button
+    let touchFound = false;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === touchIdentifier) {
+        touchFound = true;
+        break;
+      }
+    }
+    
+    if (touchFound) {
+      console.log('Touch ended on button - toggling map');
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMap();
+    }
+    
+    // Reset touch tracking
+    touchIdentifier = null;
+  }, { passive: false });
+  
+  mapToggleBtn.addEventListener('touchcancel', (e) => {
+    // Reset tracking on cancel
+    touchIdentifier = null;
+  }, { passive: true });
+  
+  // Ensure button is interactive on touch devices
+  mapToggleBtn.style.webkitTouchCallout = 'none';
+  mapToggleBtn.style.webkitUserSelect = 'none';
+  mapToggleBtn.style.touchAction = 'manipulation';
+  mapToggleBtn.style.cursor = 'pointer';
+  mapToggleBtn.style.border = 'none';
+  mapToggleBtn.style.outline = 'none';
+  
+  // Check on load and resize
+  checkScreenSize();
+  window.addEventListener('resize', checkScreenSize);
 }

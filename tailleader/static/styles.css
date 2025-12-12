@@ -366,6 +366,25 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
   /* When map is shown on mobile, make it smaller */
   #map {
     height: 350px;
+    width: 100%;
+  }
+  
+  /* Ensure map wrapper takes full width on mobile */
+  .map-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+  
+  /* Stack containers vertically on mobile */
+  .map-container {
+    flex-direction: column !important;
+    gap: 12px;
+  }
+  
+  /* Full-width status card on mobile */
+  .status-card {
+    width: 100% !important;
+    height: auto !important;
   }
   
   /* Show and style the map toggle button on mobile */
@@ -382,10 +401,30 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
     font-size: 14px;
     margin-bottom: 12px;
     transition: all 0.2s;
+    z-index: 100;
+    position: relative;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    background-clip: padding-box;
+    font-family: inherit;
+    line-height: 1.6;
   }
   
   .map-toggle-btn:hover {
     background: var(--accent-hover);
+  }
+  
+  .map-toggle-btn:active {
+    background: var(--accent-hover);
+    opacity: 0.9;
+  }
+  
+  .map-toggle-btn:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }
 
@@ -403,11 +442,52 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
   touch-action: manipulation;
 }
 
+/* Responsive map height for smaller windows */
+@media (max-width: 1400px) {
+  #map {
+    height: 450px;
+  }
+}
+
+@media (max-width: 1200px) {
+  #map {
+    height: 400px;
+  }
+}
+
+@media (max-width: 900px) {
+  #map {
+    height: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  #map {
+    height: 350px;
+  }
+}
+
 .leaflet-container {
   background: #1a1a2e !important;
   border-radius: 8px;
   /* Enable hardware acceleration for smoother touch interactions on iOS */
   transform: translate3d(0, 0, 0);
+}
+
+/* Map wrapper and container sizing */
+.map-wrapper {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.map-container {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
 }
 
 /* Custom aircraft markers */
