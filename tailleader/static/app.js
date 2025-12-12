@@ -4,6 +4,9 @@ let map;
 let aircraftMarkers = {};
 let showLabels = false;
 
+// Configuration constants
+const TOUCH_TAP_TOLERANCE = 15;  // Tolerance in pixels for tap recognition on touch devices
+
 // Mapping of 3-letter ICAO airline codes to 2-letter FR24 codes
 const airlineMap = {
   'AAL': 'AA', 'ABE': 'AB', 'ABX': 'AB', 'ACE': 'AC', 'ACA': 'AC', 'AIC': 'AI', 'AZA': 'AZ',
@@ -90,7 +93,7 @@ function initMap() {
   // Enable touch interactions for iOS/iPad/Safari compatibility
   map = L.map('map', {
     tap: true,  // Enable tap handler for mobile Safari
-    tapTolerance: 15,  // Increase tap tolerance for touch devices
+    tapTolerance: TOUCH_TAP_TOLERANCE,  // Increase tap tolerance for touch devices
     bounceAtZoomLimits: false  // Disable bounce animation that can cause issues on iOS
   }).setView([39.8283, -98.5795], 4); // Center of US as default
 
