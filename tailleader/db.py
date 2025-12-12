@@ -1,5 +1,6 @@
 import os
 import aiosqlite
+from typing import Optional
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS events (
@@ -136,7 +137,7 @@ async def store_registration(db_path: str, hex_code: str, registration: str):
         )
         await db.commit()
 
-async def get_registration_for_hex(db_path: str, hex_code: str) -> str | None:
+async def get_registration_for_hex(db_path: str, hex_code: str) -> Optional[str]:
     """Get registration for a hex code from the registry."""
     async with aiosqlite.connect(db_path) as db:
         async with db.execute(
