@@ -150,14 +150,27 @@ function updateMap(aircraft) {
     return;
   }
 
-  // Auto-center on first load if we have aircraft
-  if (Object.keys(aircraftMarkers).length === 0 && aircraft.length > 0) {
+  // Auto-center on first load if we have aircraft and station location
+  if (Object.keys(aircraftMarkers).length === 0 && aircraft.length > 0 && window.stationLocation) {
     const validAircraft = aircraft.filter(a => a.lat && a.lon);
     if (validAircraft.length > 0) {
       const lats = validAircraft.map(a => a.lat);
       const lons = validAircraft.map(a => a.lon);
+      
+      // Include station in bounds calculation
+      lats.push(window.stationLocation.lat);
+      lons.push(window.stationLocation.lon);
+      
+      // Create bounds that include all aircraft and station
       const bounds = [[Math.min(...lats), Math.min(...lons)], [Math.max(...lats), Math.max(...lons)]];
+      
+      // Fit bounds to show all aircraft, then set center to station
       map.fitBounds(bounds, { padding: [50, 50] });
+      
+      // After fitting bounds, set center back to station but keep the zoom level
+      const currentZoom = map.getZoom();
+      map.setView([window.stationLocation.lat, window.stationLocation.lon], currentZoom);
+      console.log('Map centered on station with zoom level:', currentZoom);
     }
   }
 
@@ -413,9 +426,9 @@ async function addStationMarker() {
       
       stationMarker.bindPopup(`<div style="text-align: center; font-weight: bold; color: #39ff14;">${station.name}</div>`);
       
-      // Auto-center map on station location with appropriate zoom level
-      console.log('Centering map on station:', { lat: station.latitude, lon: station.longitude });
-      map.setView([station.latitude, station.longitude], 10);
+      // Store station location globally for use in updateMap
+      window.stationLocation = { lat: station.latitude, lon: station.longitude };
+      console.log('Station location loaded:', window.stationLocation);
     }
   } catch (e) {
     console.log('Could not load station marker:', e);
@@ -438,7 +451,7 @@ function initMapToggle() {
   
   // Check screen size and show/hide toggle button
   function checkScreenSize() {
-    const isMobile = window.innerWidth <= 768; // iPad/mobile breakpoint
+    const isMobile = window.innerWidth <= 480; // Phone-only breakpoint (iPad starts at 768px+)
     console.log('checkScreenSize:', { isMobile, width: window.innerWidth });
     if (isMobile) {
       mapToggleBtn.style.display = 'block';

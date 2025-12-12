@@ -355,7 +355,7 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
 }
 
 /* Mobile phone adjustments (iPhone and similar) */
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   /* When map is hidden on mobile, hide the section header and map container
      but keep the toggle button visible (it's not affected by this rule) */
   .map-section.hidden-mobile .section-header,
