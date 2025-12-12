@@ -376,7 +376,6 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
   background: #1a1a2e !important;
   border-radius: 8px;
   /* Enable hardware acceleration for smoother touch interactions on iOS */
-  -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
 }
 
