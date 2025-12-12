@@ -470,7 +470,7 @@
             mapSection.classList.add('map-visible');
             mapToggleBtn.textContent = '📍 Hide Live Map';
             // Force map to redraw when shown
-            if (map) {
+            if (typeof map !== 'undefined' && map) {
               setTimeout(() => map.invalidateSize(), 100);
             }
           } else {
