@@ -276,6 +276,7 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
 }
 
 /* Responsive */
+/* Tablet and small desktop adjustments (iPad and similar) */
 @media (max-width: 768px) {
   header {
     flex-direction: column;
@@ -327,7 +328,7 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
     padding: 8px;
   }
 
-  /* Reduce chart height and padding for mobile */
+  /* Reduce chart height and padding for tablets */
   .chart-wrapper {
     padding: 12px;
     min-height: 220px;
@@ -336,11 +337,6 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
 
   canvas {
     max-height: 200px;
-  }
-
-  /* Hide the map section entirely on mobile (header + map) */
-  .map-section {
-    display: none;
   }
 
   /* Make tables horizontally scrollable on small screens */
@@ -355,6 +351,38 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
   }
   .section-meta {
     font-size: 11px;
+  }
+}
+
+/* Mobile phone adjustments (iPhone and similar) */
+@media (max-width: 600px) {
+  /* Add toggle button for map on very small screens */
+  .map-section.hidden-mobile {
+    display: none;
+  }
+  
+  /* When map is shown on mobile, make it smaller */
+  #map {
+    height: 350px;
+  }
+  
+  /* Adjust map toggle button style for mobile */
+  .map-toggle-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+  }
+  
+  .map-toggle-btn:hover {
+    background: var(--accent-hover);
   }
 }
 

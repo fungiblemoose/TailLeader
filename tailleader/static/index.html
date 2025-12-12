@@ -282,7 +282,10 @@
       </header>
 
       <main>
-        <section class="map-section">
+        <section class="map-section" id="mapSection">
+          <button class="map-toggle-btn" id="mapToggleBtn" style="display: none;">
+            📍 Show Live Map
+          </button>
           <div class="section-header">
             <h2>Live Aircraft Map</h2>
             <p class="section-meta">Currently visible aircraft positions</p>
@@ -438,6 +441,54 @@
       refreshFeedStatus();
       // Refresh feed status every 30 seconds
       setInterval(refreshFeedStatus, 30000);
+
+      // Handle map toggle for mobile devices
+      function initMapToggle() {
+        const mapSection = document.getElementById('mapSection');
+        const mapToggleBtn = document.getElementById('mapToggleBtn');
+        
+        // Check if screen is small enough to show toggle button
+        function checkScreenSize() {
+          if (window.innerWidth <= 600) {
+            mapToggleBtn.style.display = 'block';
+            // Start with map hidden on very small screens
+            if (!mapSection.classList.contains('map-visible')) {
+              mapSection.classList.add('hidden-mobile');
+            }
+          } else {
+            mapToggleBtn.style.display = 'none';
+            mapSection.classList.remove('hidden-mobile');
+            mapSection.classList.remove('map-visible');
+          }
+        }
+        
+        // Toggle map visibility
+        mapToggleBtn.addEventListener('click', function() {
+          const isHidden = mapSection.classList.contains('hidden-mobile');
+          if (isHidden) {
+            mapSection.classList.remove('hidden-mobile');
+            mapSection.classList.add('map-visible');
+            mapToggleBtn.textContent = '📍 Hide Live Map';
+            // Force map to redraw when shown
+            if (map) {
+              setTimeout(() => map.invalidateSize(), 100);
+            }
+          } else {
+            mapSection.classList.add('hidden-mobile');
+            mapSection.classList.remove('map-visible');
+            mapToggleBtn.textContent = '📍 Show Live Map';
+          }
+        });
+        
+        // Check on load
+        checkScreenSize();
+        
+        // Check on resize
+        window.addEventListener('resize', checkScreenSize);
+      }
+      
+      // Initialize map toggle after DOM is ready
+      initMapToggle();
     </script>
   </body>
 </html>
