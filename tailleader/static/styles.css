@@ -388,12 +388,17 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
   /* Improve touch target size and interaction on iOS */
   pointer-events: auto;
   -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3);
+  cursor: pointer;
 }
 
 .aircraft-marker svg {
   display: block;
-  /* Ensure SVG is touchable on iOS */
+  /* Prevent SVG from intercepting touch events - let them pass to parent marker */
   pointer-events: none;
+}
+
+.aircraft-marker:hover svg {
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 1));
 }
 
 .leaflet-tooltip {
@@ -406,14 +411,6 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
   padding: 3px 6px;
   border-radius: 3px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.aircraft-marker {
-  cursor: pointer;
-}
-
-.aircraft-marker:hover svg {
-  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 1));
 }
 
 /* Station marker (home icon) touch interaction */

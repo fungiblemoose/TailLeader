@@ -91,7 +91,6 @@ function initMap() {
   map = L.map('map', {
     tap: true,  // Enable tap handler for mobile Safari
     tapTolerance: 15,  // Increase tap tolerance for touch devices
-    touchZoom: true,  // Enable pinch-to-zoom on touch devices
     bounceAtZoomLimits: false  // Disable bounce animation that can cause issues on iOS
   }).setView([39.8283, -98.5795], 4); // Center of US as default
 
@@ -118,7 +117,7 @@ function initMap() {
   };
   labelToggle.addTo(map);
 
-  // Handle label toggle with both click and touch events for iOS compatibility
+  // Handle label toggle with click events (Leaflet handles touch->click conversion)
   setTimeout(() => {
     const toggleBtn = document.getElementById('labelToggle');
     const handleToggle = (e) => {
@@ -135,9 +134,8 @@ function initMap() {
         }
       });
     };
-    // Add both click and touchend listeners for better mobile compatibility
+    // Single click listener - Leaflet's tap handler converts touch events to clicks
     toggleBtn.addEventListener('click', handleToggle);
-    toggleBtn.addEventListener('touchend', handleToggle);
   }, 100);
 }
 
