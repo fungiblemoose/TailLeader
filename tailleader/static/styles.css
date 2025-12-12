@@ -369,7 +369,7 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
   /* iOS/Safari touch interaction fixes */
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
-  touch-action: manipulation;  /* Allow all standard touch gestures while disabling double-tap zoom */
+  touch-action: manipulation;
 }
 
 .leaflet-container {
