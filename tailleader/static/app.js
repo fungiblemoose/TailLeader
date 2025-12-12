@@ -87,7 +87,13 @@ async function refreshLookupStatus() {
 
 function initMap() {
   // Initialize map centered on a default location (will auto-center on first aircraft)
-  map = L.map('map').setView([39.8283, -98.5795], 4); // Center of US as default
+  // Enable touch interactions for iOS/iPad/Safari compatibility
+  map = L.map('map', {
+    tap: true,  // Enable tap handler for mobile Safari
+    tapTolerance: 15,  // Increase tap tolerance for touch devices
+    touchZoom: true,  // Enable pinch-to-zoom on touch devices
+    bounceAtZoomLimits: false  // Disable bounce animation that can cause issues on iOS
+  }).setView([39.8283, -98.5795], 4); // Center of US as default
 
   // Use CartoDB dark matter tiles for a sleek look
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -103,15 +109,23 @@ function initMap() {
     div.innerHTML = '<button id="labelToggle" style="background: white; border: none; padding: 8px 12px; cursor: pointer; font-size: 12px; font-weight: 500;">Show Labels</button>';
     div.style.background = 'transparent';
     div.style.border = 'none';
+    
+    // Prevent map interactions when clicking the button
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    
     return div;
   };
   labelToggle.addTo(map);
 
-  // Handle label toggle
+  // Handle label toggle with both click and touch events for iOS compatibility
   setTimeout(() => {
-    document.getElementById('labelToggle').addEventListener('click', () => {
+    const toggleBtn = document.getElementById('labelToggle');
+    const handleToggle = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       showLabels = !showLabels;
-      document.getElementById('labelToggle').textContent = showLabels ? 'Hide Labels' : 'Show Labels';
+      toggleBtn.textContent = showLabels ? 'Hide Labels' : 'Show Labels';
       // Update all existing markers
       Object.entries(aircraftMarkers).forEach(([hex, marker]) => {
         if (showLabels && marker.registration) {
@@ -120,7 +134,10 @@ function initMap() {
           marker.unbindTooltip();
         }
       });
-    });
+    };
+    // Add both click and touchend listeners for better mobile compatibility
+    toggleBtn.addEventListener('click', handleToggle);
+    toggleBtn.addEventListener('touchend', handleToggle);
   }, 100);
 }
 
@@ -172,12 +189,18 @@ function updateMap(aircraft) {
         iconAnchor: [10, 10]
       });
       
-      const marker = L.marker([ac.lat, ac.lon], { icon: icon }).addTo(map);
+      const marker = L.marker([ac.lat, ac.lon], { 
+        icon: icon,
+        interactive: true,  // Ensure marker is interactive on touch devices
+        bubblingMouseEvents: false  // Prevent event bubbling issues on touch devices
+      }).addTo(map);
       marker.registration = ac.registration;
       marker.track = rotation;
       
       // Add click handler for marker - goes to live map page
-      marker.on('click', () => {
+      // Leaflet automatically handles touch events as clicks
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);  // Prevent map click events
         if (ac.registration) {
           const trimmed = ac.registration.trim().toUpperCase();
           const isFlightNumber = /^[A-Z]{2,3}\d/.test(trimmed);
