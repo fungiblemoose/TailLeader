@@ -31,6 +31,8 @@ feeder:
 
 **Hardware**: Any Raspberry Pi with an RTL-SDR or similar ADS-B receiver. TailLeader itself is lightweight and works alongside existing feeders.
 
+**Python**: 3.9+ (works with the default Python on Raspberry Pi OS bullseye).
+
 ## Quick Start (Raspberry Pi)
 
 ```bash
