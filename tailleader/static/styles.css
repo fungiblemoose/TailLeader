@@ -356,8 +356,9 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
 
 /* Mobile phone adjustments (iPhone and similar) */
 @media (max-width: 600px) {
-  /* Add toggle button for map on very small screens */
-  .map-section.hidden-mobile {
+  /* Hide map content but keep section and toggle button visible */
+  .map-section.hidden-mobile .section-header,
+  .map-section.hidden-mobile .map-container {
     display: none;
   }
   
@@ -366,8 +367,9 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
     height: 350px;
   }
   
-  /* Adjust map toggle button style for mobile */
+  /* Show and style the map toggle button on mobile */
   .map-toggle-btn {
+    display: block !important;
     width: 100%;
     padding: 12px;
     background: var(--accent);
