@@ -3,6 +3,7 @@ import time
 import httpx
 import yaml
 import os
+from typing import Optional
 from .db import insert_event
 from .aircraft_db import lookup_registration, get_cached_registration
 
@@ -11,7 +12,7 @@ from .aircraft_db import lookup_registration, get_cached_registration
 # Only one event logged per continuous flight session
 seen_aircraft = {}
 
-def normalize_registration(reg: str | None) -> str | None:
+def normalize_registration(reg: Optional[str]) -> Optional[str]:
     """Extract and normalize flight/callsign from the registration field."""
     if not reg:
         return None
@@ -22,7 +23,7 @@ def normalize_registration(reg: str | None) -> str | None:
         return s
     return None
 
-async def lookup_and_cache(hex_id: str, db_path: str = None):
+async def lookup_and_cache(hex_id: str, db_path: Optional[str] = None):
     """Background task to lookup and cache registration."""
     try:
         reg = await lookup_registration(hex_id)
