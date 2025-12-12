@@ -393,7 +393,7 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
 
 .aircraft-marker svg {
   display: block;
-  /* Prevent SVG from intercepting touch events - let them pass to parent marker */
+  /* Allow touch events to pass through SVG to parent marker (prevents SVG from intercepting them) */
   pointer-events: none;
 }
 
