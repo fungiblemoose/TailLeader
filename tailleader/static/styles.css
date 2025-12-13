@@ -148,6 +148,24 @@ section {
   margin-bottom: 20px;
 }
 
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.chart-header .section-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chart-filters {
+  margin-left: auto;
+}
+
 .section-header h2 {
   margin: 0 0 4px 0;
   font-size: 20px;
@@ -300,6 +318,11 @@ td:nth-child(2), td:nth-child(5), td:nth-child(6) { /* Hex, Lat, Lon */
     flex: 1 1 30%;
     min-width: 100px;
     text-align: center;
+  }
+
+  .chart-header {
+    align-items: flex-start;
+    gap: 12px;
   }
 
   /* Make system stats wrap and reduce size to avoid cutoff */

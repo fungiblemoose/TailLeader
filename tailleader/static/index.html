@@ -273,13 +273,6 @@
           <h1>✈️ TailLeader</h1>
           <p class="subtitle">ADS-B Aircraft Frequency Tracker</p>
         </div>
-        <div class="header-right">
-          <div class="filters">
-            <button data-window="24h" class="active">Last 24h</button>
-            <button data-window="30d">Last 30d</button>
-            <button data-window="all">All-time</button>
-          </div>
-        </div>
       </header>
 
       <main>
@@ -337,9 +330,16 @@
         </section>
 
         <section class="chart-section">
-          <div class="section-header">
-            <h2><a href="/all-registrations">Top Registrations</a></h2>
-            <p class="section-meta">Most frequently observed aircraft</p>
+          <div class="section-header chart-header">
+            <div class="section-title">
+              <h2><a href="/all-registrations">Top Registrations</a></h2>
+              <p class="section-meta">Most frequently observed aircraft</p>
+            </div>
+            <div class="filters chart-filters">
+              <button data-window="24h" class="active">Last 24h</button>
+              <button data-window="30d">Last 30d</button>
+              <button data-window="all">All-time</button>
+            </div>
           </div>
           <div class="chart-wrapper">
             <canvas id="topChart"></canvas>
