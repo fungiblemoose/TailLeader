@@ -76,6 +76,77 @@ async def api_all_registrations(window: str = Query("all", pattern="^(24h|30d|al
         
         return [dict(rank=i+1, registration=tail, count=c) for i, (tail, c) in enumerate(rows)]
 
+@app.get("/api/all_aircraft_types")
+async def api_all_aircraft_types(window: str = Query("all", pattern="^(24h|30d|all)$")):
+    """Return all aircraft types for a given time window, ranked by frequency"""
+    import aiosqlite
+    async with aiosqlite.connect(db_path) as db:
+        if window == "24h":
+            import time
+            since = int(time.time()) - 24 * 3600
+            q = (
+                "SELECT "
+                "CASE "
+                "  WHEN ar.manufacturer IS NOT NULL AND ar.aircraft_type IS NOT NULL "
+                "    THEN ar.manufacturer || ' ' || ar.aircraft_type "
+                "  WHEN ar.icao_type IS NOT NULL "
+                "    THEN ar.icao_type "
+                "  ELSE 'Unknown' "
+                "END as type_display, "
+                "COUNT(*) as c "
+                "FROM events e "
+                "JOIN aircraft_registry ar ON e.hex = ar.hex "
+                "WHERE e.observed_at >= ? "
+                "GROUP BY type_display "
+                "HAVING type_display != 'Unknown' "
+                "ORDER BY c DESC"
+            )
+            async with db.execute(q, (since,)) as cur:
+                rows = await cur.fetchall()
+        elif window == "30d":
+            import time
+            since = int(time.time()) - 30 * 24 * 3600
+            q = (
+                "SELECT "
+                "CASE "
+                "  WHEN ar.manufacturer IS NOT NULL AND ar.aircraft_type IS NOT NULL "
+                "    THEN ar.manufacturer || ' ' || ar.aircraft_type "
+                "  WHEN ar.icao_type IS NOT NULL "
+                "    THEN ar.icao_type "
+                "  ELSE 'Unknown' "
+                "END as type_display, "
+                "COUNT(*) as c "
+                "FROM events e "
+                "JOIN aircraft_registry ar ON e.hex = ar.hex "
+                "WHERE e.observed_at >= ? "
+                "GROUP BY type_display "
+                "HAVING type_display != 'Unknown' "
+                "ORDER BY c DESC"
+            )
+            async with db.execute(q, (since,)) as cur:
+                rows = await cur.fetchall()
+        else:  # all
+            q = (
+                "SELECT "
+                "CASE "
+                "  WHEN ar.manufacturer IS NOT NULL AND ar.aircraft_type IS NOT NULL "
+                "    THEN ar.manufacturer || ' ' || ar.aircraft_type "
+                "  WHEN ar.icao_type IS NOT NULL "
+                "    THEN ar.icao_type "
+                "  ELSE 'Unknown' "
+                "END as type_display, "
+                "COUNT(*) as c "
+                "FROM events e "
+                "JOIN aircraft_registry ar ON e.hex = ar.hex "
+                "GROUP BY type_display "
+                "HAVING type_display != 'Unknown' "
+                "ORDER BY c DESC"
+            )
+            async with db.execute(q) as cur:
+                rows = await cur.fetchall()
+        
+        return [dict(rank=i+1, aircraft_type=type_display, count=c) for i, (type_display, c) in enumerate(rows)]
+
 @app.get("/api/recent")
 async def api_recent(limit: int = 50):
     return await recent_events(db_path, limit)
