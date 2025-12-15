@@ -49,9 +49,14 @@ async def lookup_registration(hex_code: str) -> Optional[Tuple[str, Optional[str
 def get_cached_registration(hex_code: str) -> Optional[str]:
     """Get registration from cache only (non-async). Returns just the registration string."""
     cached = _cache.get(hex_code.upper())
-    if cached and isinstance(cached, tuple):
+    if isinstance(cached, tuple) and len(cached) == 4:
         return cached[0]
-    return cached
+    elif isinstance(cached, str):
+        # Migrate old string format to new tuple format in cache
+        _cache[hex_code.upper()] = (cached, None, None, None)
+        return cached
+    else:
+        return None
 
 def get_cached_aircraft_data(hex_code: str) -> Optional[Tuple[str, Optional[str], Optional[str], Optional[str]]]:
     """Get full aircraft data from cache only (non-async)."""
