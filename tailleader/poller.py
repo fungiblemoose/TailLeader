@@ -24,12 +24,13 @@ def normalize_registration(reg: Optional[str]) -> Optional[str]:
     return None
 
 async def lookup_and_cache(hex_id: str, db_path: Optional[str] = None):
-    """Background task to lookup and cache registration."""
+    """Background task to lookup and cache registration and aircraft type."""
     try:
-        reg = await lookup_registration(hex_id)
-        if reg and db_path:
+        result = await lookup_registration(hex_id)
+        if result and db_path:
             from .db import store_registration
-            await store_registration(db_path, hex_id, reg)
+            reg, aircraft_type, manufacturer, icao_type = result
+            await store_registration(db_path, hex_id, reg, aircraft_type, manufacturer, icao_type)
     except Exception:
         pass
 
@@ -138,8 +139,8 @@ async def run_poller(config: dict, db_path: str):
         async with aiosqlite.connect(db_path) as db:
             # Load registration cache from database
             from .aircraft_db import load_cache_from_db
-            async with db.execute("SELECT hex, registration FROM aircraft_registry") as cur:
-                registry = {row[0]: row[1] for row in await cur.fetchall()}
+            async with db.execute("SELECT hex, registration, aircraft_type, manufacturer, icao_type FROM aircraft_registry") as cur:
+                registry = {row[0]: (row[1], row[2], row[3], row[4]) for row in await cur.fetchall()}
                 if registry:
                     load_cache_from_db(registry)
                     print(f"Loaded {len(registry)} registrations from cache")

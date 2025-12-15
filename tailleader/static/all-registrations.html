@@ -142,7 +142,7 @@
       <header>
         <div class="header-content">
           <h1>✈️ TailLeader</h1>
-          <p class="subtitle">All Registrations</p>
+          <p class="subtitle" id="pageSubtitle">All Registrations</p>
         </div>
       </header>
 
@@ -152,13 +152,16 @@
         <div class="stats-summary">
           <div class="stat">
             <span class="stat-value" id="totalCount">0</span>
-            <span class="stat-label">Total Registrations</span>
+            <span class="stat-label" id="totalCountLabel">Total Registrations</span>
           </div>
           <div class="stat">
             <span class="stat-value" id="totalObservations">0</span>
             <span class="stat-label">Total Observations</span>
           </div>
           <div class="filters">
+            <button id="viewToggle" style="background: #3b82f6; color: white; border-color: #3b82f6; margin-right: 16px;">
+              Show Aircraft Types
+            </button>
             <button data-window="24h">Last 24h</button>
             <button data-window="30d">Last 30d</button>
             <button data-window="all" class="active">All-time</button>
@@ -178,35 +181,72 @@
 
     <script>
       let allRegistrations = [];
+      let allAircraftTypes = [];
       let currentWindow = 'all';
+      let showingTypes = false;
 
       async function fetchAllRegistrations(window = 'all') {
         const res = await fetch(`/api/all_registrations?window=${window}`);
         allRegistrations = await res.json();
-        renderRegistrations(allRegistrations);
-        updateStats(allRegistrations);
+        renderData();
+        updateStats();
       }
 
-      function updateStats(data) {
+      async function fetchAllAircraftTypes(window = 'all') {
+        const res = await fetch(`/api/all_aircraft_types?window=${window}`);
+        allAircraftTypes = await res.json();
+        renderData();
+        updateStats();
+      }
+
+      function updateStats() {
+        const data = showingTypes ? allAircraftTypes : allRegistrations;
         document.getElementById('totalCount').textContent = data.length;
+        document.getElementById('totalCountLabel').textContent = showingTypes ? 'Total Aircraft Types' : 'Total Registrations';
         const totalObs = data.reduce((sum, r) => sum + r.count, 0);
         document.getElementById('totalObservations').textContent = totalObs.toLocaleString();
       }
 
-      function renderRegistrations(data) {
+      // Helper function to escape HTML special characters
+      function escapeHTML(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function generateCardHTML(data) {
+        if (showingTypes) {
+          return data.map(r => `
+            <div class="reg-card" onclick="searchAircraftType('${escapeHTML(r.aircraft_type)}')">
+              <div class="reg-rank">#${r.rank}</div>
+              <div class="reg-name">${escapeHTML(r.aircraft_type)}</div>
+              <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
+            </div>
+          `).join('');
+        } else {
+          return data.map(r => `
+            <div class="reg-card" onclick="openAircraftData('${r.registration}')">
+              <div class="reg-rank">#${r.rank}</div>
+              <div class="reg-name">${r.registration}</div>
+              <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
+            </div>
+          `).join('');
+        }
+      }
+
+      function renderData() {
+        const data = showingTypes ? allAircraftTypes : allRegistrations;
         const grid = document.getElementById('registrationsGrid');
+        
         if (data.length === 0) {
-          grid.innerHTML = '<div class="no-results">No registrations found</div>';
+          grid.innerHTML = `<div class="no-results">No ${showingTypes ? 'aircraft types' : 'registrations'} found</div>`;
           return;
         }
 
-        grid.innerHTML = data.map(r => `
-          <div class="reg-card" onclick="openAircraftData('${r.registration}')">
-            <div class="reg-rank">#${r.rank}</div>
-            <div class="reg-name">${r.registration}</div>
-            <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
-          </div>
-        `).join('');
+        grid.innerHTML = generateCardHTML(data);
       }
 
       function openAircraftData(registration) {
@@ -215,27 +255,76 @@
         window.open(url, '_blank');
       }
 
+      function searchAircraftType(aircraftType) {
+        const encoded = encodeURIComponent(aircraftType);
+        const url = `https://www.google.com/search?q=${encoded}+aircraft`;
+        window.open(url, '_blank');
+      }
+
       // Search functionality
       document.getElementById('searchBox').addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
+        const data = showingTypes ? allAircraftTypes : allRegistrations;
+        const searchField = showingTypes ? 'aircraft_type' : 'registration';
+        
         if (query === '') {
-          renderRegistrations(allRegistrations);
+          renderData();
         } else {
-          const filtered = allRegistrations.filter(r => 
-            r.registration.toLowerCase().includes(query)
+          const filtered = data.filter(r => 
+            r[searchField].toLowerCase().includes(query)
           );
-          renderRegistrations(filtered);
+          
+          const grid = document.getElementById('registrationsGrid');
+          if (filtered.length === 0) {
+            grid.innerHTML = `<div class="no-results">No ${showingTypes ? 'aircraft types' : 'registrations'} found</div>`;
+            return;
+          }
+
+          grid.innerHTML = generateCardHTML(filtered);
         }
       });
 
+      // View toggle button
+      document.getElementById('viewToggle').addEventListener('click', async () => {
+        showingTypes = !showingTypes;
+        const toggleBtn = document.getElementById('viewToggle');
+        const searchBox = document.getElementById('searchBox');
+        const subtitle = document.getElementById('pageSubtitle');
+        
+        if (showingTypes) {
+          toggleBtn.textContent = 'Show Registrations';
+          searchBox.placeholder = 'Search aircraft type (e.g., Cessna 172)...';
+          subtitle.textContent = 'All Aircraft Types';
+          if (allAircraftTypes.length === 0) {
+            await fetchAllAircraftTypes(currentWindow);
+          } else {
+            renderData();
+            updateStats();
+          }
+        } else {
+          toggleBtn.textContent = 'Show Aircraft Types';
+          searchBox.placeholder = 'Search registration (e.g., N12345)...';
+          subtitle.textContent = 'All Registrations';
+          renderData();
+          updateStats();
+        }
+        
+        searchBox.value = '';
+      });
+
       // Window filter buttons
-      document.querySelectorAll('.filters button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.filters button[data-window]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          document.querySelectorAll('.filters button[data-window]').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           currentWindow = btn.dataset.window;
           document.getElementById('searchBox').value = '';
-          fetchAllRegistrations(currentWindow);
+          
+          if (showingTypes) {
+            await fetchAllAircraftTypes(currentWindow);
+          } else {
+            await fetchAllRegistrations(currentWindow);
+          }
         });
       });
 

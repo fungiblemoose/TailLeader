@@ -28,6 +28,9 @@ CREATE TABLE IF NOT EXISTS daily_summary (
 CREATE TABLE IF NOT EXISTS aircraft_registry (
   hex TEXT PRIMARY KEY,
   registration TEXT NOT NULL,
+  aircraft_type TEXT,
+  manufacturer TEXT,
+  icao_type TEXT,
   last_updated INTEGER
 );
 """
@@ -127,13 +130,16 @@ async def rollup_daily(db_path: str):
         )
         await db.commit()
 
-async def store_registration(db_path: str, hex_code: str, registration: str):
-    """Store a hex -> registration mapping."""
+async def store_registration(db_path: str, hex_code: str, registration: str, 
+                           aircraft_type: Optional[str] = None,
+                           manufacturer: Optional[str] = None,
+                           icao_type: Optional[str] = None):
+    """Store a hex -> registration mapping with optional aircraft type data."""
     import time
     async with aiosqlite.connect(db_path) as db:
         await db.execute(
-            "INSERT OR REPLACE INTO aircraft_registry (hex, registration, last_updated) VALUES (?, ?, ?)",
-            (hex_code.upper(), registration.upper(), int(time.time()))
+            "INSERT OR REPLACE INTO aircraft_registry (hex, registration, aircraft_type, manufacturer, icao_type, last_updated) VALUES (?, ?, ?, ?, ?, ?)",
+            (hex_code.upper(), registration.upper(), aircraft_type, manufacturer, icao_type, int(time.time()))
         )
         await db.commit()
 
