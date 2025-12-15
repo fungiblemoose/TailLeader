@@ -207,12 +207,22 @@
         document.getElementById('totalObservations').textContent = totalObs.toLocaleString();
       }
 
+      // Helper function to escape HTML special characters
+      function escapeHTML(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
       function generateCardHTML(data) {
         if (showingTypes) {
           return data.map(r => `
-            <div class="reg-card" onclick="searchAircraftType('${r.aircraft_type}')">
+            <div class="reg-card" onclick="searchAircraftType('${escapeHTML(r.aircraft_type)}')">
               <div class="reg-rank">#${r.rank}</div>
-              <div class="reg-name">${r.aircraft_type}</div>
+              <div class="reg-name">${escapeHTML(r.aircraft_type)}</div>
               <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
             </div>
           `).join('');
