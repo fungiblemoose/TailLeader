@@ -77,13 +77,31 @@ async def api_all_registrations(window: str = Query("all", pattern="^(24h|30d|al
         return [dict(rank=i+1, registration=tail, count=c) for i, (tail, c) in enumerate(rows)]
 
 @app.get("/api/all_aircraft_types")
-async def api_all_aircraft_types(window: str = Query("all", pattern="^(24h|30d|all)$")):
-    """Return all aircraft types for a given time window, ranked by frequency"""
+async def api_all_aircraft_types(window: str = Query("all", pattern="^(24h|30d|all)$"), source: str = Query("events", pattern="^(events|registry)$")):
+    """Return aircraft types ranked by frequency"""
     import aiosqlite
     import time
     
     async with aiosqlite.connect(db_path) as db:
-        if window == "24h":
+        if source == "registry":
+            q = (
+                "SELECT "
+                "CASE "
+                "  WHEN manufacturer IS NOT NULL AND aircraft_type IS NOT NULL "
+                "    THEN manufacturer || ' ' || aircraft_type "
+                "  WHEN icao_type IS NOT NULL "
+                "    THEN icao_type "
+                "  ELSE 'Unknown' "
+                "END as type_display, "
+                "COUNT(*) as c "
+                "FROM aircraft_registry "
+                "GROUP BY type_display "
+                "HAVING type_display != 'Unknown' "
+                "ORDER BY c DESC"
+            )
+            async with db.execute(q) as cur:
+                rows = await cur.fetchall()
+        elif window == "24h":
             since = int(time.time()) - 24 * 3600
             q = (
                 "SELECT "
@@ -146,6 +164,94 @@ async def api_all_aircraft_types(window: str = Query("all", pattern="^(24h|30d|a
                 rows = await cur.fetchall()
         
         return [dict(rank=i+1, aircraft_type=type_display, count=c) for i, (type_display, c) in enumerate(rows)]
+
+@app.post("/api/backfill_types")
+async def api_backfill_types(limit: int = 500):
+    """Backfill aircraft type/manufacturer/icao_type for cached registrations.
+    Processes up to `limit` entries missing type info.
+    """
+    import aiosqlite
+    from .aircraft_db import lookup_registration
+    from .db import store_registration
+    processed = 0
+    remaining = 0
+    async with aiosqlite.connect(db_path) as db:
+        # Count remaining missing type entries
+        async with db.execute(
+            "SELECT COUNT(*) FROM aircraft_registry WHERE (aircraft_type IS NULL OR aircraft_type = '') AND (manufacturer IS NULL OR manufacturer = '') AND (icao_type IS NULL OR icao_type = '')"
+        ) as cur:
+            row = await cur.fetchone()
+            remaining = int(row[0] or 0)
+
+        # Fetch batch to process
+        async with db.execute(
+            "SELECT hex FROM aircraft_registry WHERE (aircraft_type IS NULL OR aircraft_type = '') AND (manufacturer IS NULL OR manufacturer = '') AND (icao_type IS NULL OR icao_type = '') LIMIT ?",
+            (limit,)
+        ) as cur:
+            rows = await cur.fetchall()
+            for (hex_code,) in rows:
+                try:
+                    result = await lookup_registration(hex_code)
+                    if result:
+                        reg, aircraft_type, manufacturer, icao_type = result
+                        await store_registration(db_path, hex_code, reg or '', aircraft_type, manufacturer, icao_type)
+                        processed += 1
+                except Exception:
+                    pass
+
+    return {"status": "ok", "processed": processed, "remaining": max(0, remaining - processed)}
+
+@app.post("/api/backfill_types_local")
+async def api_backfill_types_local(limit: int = 10000):
+    """Backfill aircraft type/manufacturer/icao_type using local CSV database.
+    Scans the local aircraft-db.csv (misnamed .zip) and updates missing entries.
+    """
+    import aiosqlite
+    import csv
+    import os
+    processed = 0
+    data_file = os.path.join(data_dir, "aircraft-db.csv.zip")
+    if not os.path.exists(data_file):
+        return {"status": "error", "message": "Local aircraft DB CSV not found"}
+
+    # Collect missing hexes
+    missing = set()
+    async with aiosqlite.connect(db_path) as db:
+        async with db.execute(
+            "SELECT hex FROM aircraft_registry WHERE (aircraft_type IS NULL OR aircraft_type = '') AND (manufacturer IS NULL OR manufacturer = '') AND (icao_type IS NULL OR icao_type = '')"
+        ) as cur:
+            rows = await cur.fetchall()
+            missing = {row[0].upper() for row in rows}
+
+    if not missing:
+        return {"status": "ok", "processed": 0, "remaining": 0}
+
+    # Stream CSV and update matching rows
+    try:
+        with open(data_file, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if processed >= limit:
+                    break
+                icao24 = (row.get("icao24") or "").strip().upper()
+                if icao24 and icao24 in missing:
+                    reg = (row.get("registration") or "").strip().upper()
+                    manufacturer = (row.get("manufacturername") or "").strip() or (row.get("manufacturericao") or "").strip()
+                    aircraft_type = (row.get("model") or "").strip() or (row.get("typecode") or "").strip()
+                    icao_type = (row.get("icaoaircrafttype") or "").strip()
+                    # Only update if we have at least one type field
+                    if manufacturer or aircraft_type or icao_type:
+                        from .db import store_registration
+                        await store_registration(db_path, icao24, reg or "", aircraft_type or None, manufacturer or None, icao_type or None)
+                        processed += 1
+                        # remove from missing to avoid re-processing
+                        missing.remove(icao24)
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+    # Compute remaining after updates
+    remaining = len(missing)
+    return {"status": "ok", "processed": processed, "remaining": remaining}
 
 @app.get("/api/recent")
 async def api_recent(limit: int = 50):

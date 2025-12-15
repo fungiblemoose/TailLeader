@@ -156,12 +156,12 @@
           </div>
           <div class="stat">
             <span class="stat-value" id="totalObservations">0</span>
-            <span class="stat-label">Total Observations</span>
+             <span class="stat-label" id="totalObservationsLabel">Total Observations</span>
           </div>
           <div class="filters">
             <button id="viewToggle" style="background: #3b82f6; color: white; border-color: #3b82f6; margin-right: 16px;">
               Show Aircraft Types
-            </button>
+              </button>
             <button data-window="24h">Last 24h</button>
             <button data-window="30d">Last 30d</button>
             <button data-window="all" class="active">All-time</button>
@@ -183,7 +183,7 @@
       let allRegistrations = [];
       let allAircraftTypes = [];
       let currentWindow = 'all';
-      let showingTypes = false;
+        let showingTypes = false;
 
       async function fetchAllRegistrations(window = 'all') {
         const res = await fetch(`/api/all_registrations?window=${window}`);
@@ -193,18 +193,19 @@
       }
 
       async function fetchAllAircraftTypes(window = 'all') {
-        const res = await fetch(`/api/all_aircraft_types?window=${window}`);
-        allAircraftTypes = await res.json();
-        renderData();
-        updateStats();
+            const res = await fetch(`/api/all_aircraft_types?window=${window}&source=events`);
+            allAircraftTypes = await res.json();
+            renderData();
+            updateStats();
       }
 
       function updateStats() {
         const data = showingTypes ? allAircraftTypes : allRegistrations;
         document.getElementById('totalCount').textContent = data.length;
-        document.getElementById('totalCountLabel').textContent = showingTypes ? 'Total Aircraft Types' : 'Total Registrations';
-        const totalObs = data.reduce((sum, r) => sum + r.count, 0);
-        document.getElementById('totalObservations').textContent = totalObs.toLocaleString();
+          document.getElementById('totalCountLabel').textContent = showingTypes ? 'Total Aircraft Types' : 'Total Unique Aircraft';
+          const totalObs = data.reduce((sum, r) => sum + r.count, 0);
+          document.getElementById('totalObservations').textContent = totalObs.toLocaleString();
+          document.getElementById('totalObservationsLabel').textContent = 'Total Observations';
       }
 
       // Helper function to escape HTML special characters
@@ -311,6 +312,8 @@
         
         searchBox.value = '';
       });
+
+        // Source toggle removed; types view always uses cache-based counts
 
       // Window filter buttons
       document.querySelectorAll('.filters button[data-window]').forEach(btn => {
