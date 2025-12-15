@@ -3,6 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#3b82f6" />
+    <link rel="manifest" href="/static/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TailLeader" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/static/icons/icon-512x512.png" />
     <title>TailLeader</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <link rel="stylesheet" href="/static/styles.css" />
@@ -264,6 +272,44 @@
           font-size: 12px;
         }
       }
+    
+      /* Simple tooltip indicators - info icon next to headers */
+      th {
+        position: relative;
+      }
+      /* Last updated timestamp */
+      .last-updated {
+        font-size: 11px;
+        color: #64748b;
+        font-style: italic;
+        margin-top: 8px;
+      }
+      /* Aircraft count badge */
+      .aircraft-count {
+        display: inline-block;
+        background: #3b82f6;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 8px;
+      }
+      /* Empty state message */
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+        font-size: 16px;
+        background: rgba(30, 41, 59, 0.3);
+        border-radius: 8px;
+        border: 2px dashed #334155;
+      }
+      .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
     </style>
   </head>
   <body>
@@ -281,8 +327,9 @@
             📍 Show Live Map
           </button>
           <div class="section-header">
-            <h2>Live Aircraft Map</h2>
+            <h2>Live Aircraft Map<span class="aircraft-count" id="aircraftCount">0</span></h2>
             <p class="section-meta">Currently visible aircraft positions</p>
+            <p class="last-updated" id="mapLastUpdated">Last updated: --</p>
           </div>
           <div class="map-container">
             <div class="map-wrapper">
@@ -334,6 +381,7 @@
             <div class="section-title">
               <h2><a href="/all-registrations">Top Registrations</a></h2>
               <p class="section-meta">Most frequently observed aircraft</p>
+              <p class="last-updated" id="chartLastUpdated">Last updated: --</p>
             </div>
             <div class="filters chart-filters">
               <button data-window="24h" class="active">Last 24h</button>
@@ -356,9 +404,9 @@
               <thead>
                 <tr>
                   <th>Time</th>
-                  <th>Hex</th>
+                  <th>Hex <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">ℹ️</span></th>
                   <th>Registration</th>
-                  <th>RSSI (dBm)</th>
+                  <th>RSSI (dBm) <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">ℹ️</span></th>
                   <th>Latitude</th>
                   <th>Longitude</th>
                 </tr>

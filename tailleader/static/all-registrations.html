@@ -3,6 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#3b82f6" />
+    <link rel="manifest" href="/static/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TailLeader" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/static/icons/icon-512x512.png" />
     <title>All Registrations - TailLeader</title>
     <link rel="stylesheet" href="/static/styles.css" />
     <style>
@@ -133,7 +141,28 @@
         .filters {
           margin-left: 0;
           width: 100%;
+          flex-wrap: wrap;
         }
+        .filters button {
+          flex: 1 1 auto;
+          min-width: fit-content;
+          font-size: 13px;
+          padding: 8px 12px;
+          white-space: nowrap;
+        }
+        #viewToggle {
+          flex: 1 1 100%;
+          margin-right: 0 !important;
+          margin-bottom: 8px;
+        }
+      }
+    
+      .last-updated {
+        font-size: 11px;
+        color: #64748b;
+        font-style: italic;
+        margin-top: 8px;
+        text-align: center;
       }
     </style>
   </head>
@@ -160,7 +189,7 @@
           </div>
           <div class="filters">
             <button id="viewToggle" style="background: #3b82f6; color: white; border-color: #3b82f6; margin-right: 16px;">
-              Show Aircraft Types
+              Show Types
               </button>
             <button data-window="24h">Last 24h</button>
             <button data-window="30d">Last 30d</button>
@@ -175,6 +204,7 @@
           placeholder="Search registration (e.g., N12345)..."
         />
 
+        <div class="last-updated" id="lastUpdated">Last updated: --</div>
         <div class="registrations-grid" id="registrationsGrid"></div>
       </main>
     </div>
@@ -242,6 +272,13 @@
         const data = showingTypes ? allAircraftTypes : allRegistrations;
         const grid = document.getElementById('registrationsGrid');
         
+        // Update timestamp
+        const lastUpdatedEl = document.getElementById('lastUpdated');
+        if (lastUpdatedEl) {
+          const now = new Date();
+          lastUpdatedEl.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+        }
+        
         if (data.length === 0) {
           grid.innerHTML = `<div class="no-results">No ${showingTypes ? 'aircraft types' : 'registrations'} found</div>`;
           return;
@@ -293,7 +330,7 @@
         const subtitle = document.getElementById('pageSubtitle');
         
         if (showingTypes) {
-          toggleBtn.textContent = 'Show Registrations';
+          toggleBtn.textContent = 'Show Regs';
           searchBox.placeholder = 'Search aircraft type (e.g., Cessna 172)...';
           subtitle.textContent = 'All Aircraft Types';
           if (allAircraftTypes.length === 0) {
@@ -303,7 +340,7 @@
             updateStats();
           }
         } else {
-          toggleBtn.textContent = 'Show Aircraft Types';
+          toggleBtn.textContent = 'Show Types';
           searchBox.placeholder = 'Search registration (e.g., N12345)...';
           subtitle.textContent = 'All Registrations';
           renderData();

@@ -1,3 +1,16 @@
+// Register service worker for PWA support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registered:', registration.scope);
+      })
+      .catch(err => {
+        console.log('ServiceWorker registration failed:', err);
+      });
+  });
+}
+
 let currentWindow = '24h';
 let chart;
 let map;
@@ -144,6 +157,19 @@ function initMap() {
 
 function updateMap(aircraft) {
   const currentHexes = new Set();
+  
+  // Update aircraft count
+  const countEl = document.getElementById('aircraftCount');
+  if (countEl) {
+    countEl.textContent = aircraft.length;
+  }
+  
+  // Update last updated timestamp
+  const lastUpdatedEl = document.getElementById('mapLastUpdated');
+  if (lastUpdatedEl) {
+    const now = new Date();
+    lastUpdatedEl.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+  }
   
   if (aircraft.length === 0) {
     // Don't clear markers immediately - let stale count handle it
@@ -327,6 +353,15 @@ function renderRecent(rows) {
   const tbody = document.getElementById('recentBody');
   if (!tbody) return;
   tbody.innerHTML = '';
+  
+  // Show empty state if no rows
+  if (rows.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td colspan="6" style="text-align: center; padding: 40px; color: #64748b; font-size: 14px;">✈️ No recent sightings available</td>';
+    tbody.appendChild(tr);
+    return;
+  }
+  
   for (const r of rows) {
     const tr = document.createElement('tr');
     const t = new Date(r.observed_at * 1000).toLocaleString();
@@ -351,6 +386,13 @@ async function refresh() {
   renderChart(top);
   const recent = await fetchRecent();
   renderRecent(recent);
+  
+  // Update chart last updated timestamp
+  const chartUpdatedEl = document.getElementById('chartLastUpdated');
+  if (chartUpdatedEl) {
+    const now = new Date();
+    chartUpdatedEl.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+  }
 }
 
 async function refreshMap() {
