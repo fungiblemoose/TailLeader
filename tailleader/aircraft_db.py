@@ -1,7 +1,7 @@
 """Simple aircraft registration lookup using multiple sources."""
 import httpx
 import asyncio
-from typing import Optional, Dict, Tuple
+from typing import Optional, Tuple
 
 # In-memory cache: hex -> (registration, aircraft_type, manufacturer, icao_type)
 _cache = {}
