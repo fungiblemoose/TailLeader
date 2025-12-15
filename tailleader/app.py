@@ -80,9 +80,10 @@ async def api_all_registrations(window: str = Query("all", pattern="^(24h|30d|al
 async def api_all_aircraft_types(window: str = Query("all", pattern="^(24h|30d|all)$")):
     """Return all aircraft types for a given time window, ranked by frequency"""
     import aiosqlite
+    import time
+    
     async with aiosqlite.connect(db_path) as db:
         if window == "24h":
-            import time
             since = int(time.time()) - 24 * 3600
             q = (
                 "SELECT "
@@ -104,7 +105,6 @@ async def api_all_aircraft_types(window: str = Query("all", pattern="^(24h|30d|a
             async with db.execute(q, (since,)) as cur:
                 rows = await cur.fetchall()
         elif window == "30d":
-            import time
             since = int(time.time()) - 30 * 24 * 3600
             q = (
                 "SELECT "

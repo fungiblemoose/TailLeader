@@ -207,6 +207,26 @@
         document.getElementById('totalObservations').textContent = totalObs.toLocaleString();
       }
 
+      function generateCardHTML(data) {
+        if (showingTypes) {
+          return data.map(r => `
+            <div class="reg-card" onclick="searchAircraftType('${r.aircraft_type}')">
+              <div class="reg-rank">#${r.rank}</div>
+              <div class="reg-name">${r.aircraft_type}</div>
+              <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
+            </div>
+          `).join('');
+        } else {
+          return data.map(r => `
+            <div class="reg-card" onclick="openAircraftData('${r.registration}')">
+              <div class="reg-rank">#${r.rank}</div>
+              <div class="reg-name">${r.registration}</div>
+              <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
+            </div>
+          `).join('');
+        }
+      }
+
       function renderData() {
         const data = showingTypes ? allAircraftTypes : allRegistrations;
         const grid = document.getElementById('registrationsGrid');
@@ -216,23 +236,7 @@
           return;
         }
 
-        if (showingTypes) {
-          grid.innerHTML = data.map(r => `
-            <div class="reg-card" onclick="searchAircraftType('${r.aircraft_type}')">
-              <div class="reg-rank">#${r.rank}</div>
-              <div class="reg-name">${r.aircraft_type}</div>
-              <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
-            </div>
-          `).join('');
-        } else {
-          grid.innerHTML = data.map(r => `
-            <div class="reg-card" onclick="openAircraftData('${r.registration}')">
-              <div class="reg-rank">#${r.rank}</div>
-              <div class="reg-name">${r.registration}</div>
-              <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
-            </div>
-          `).join('');
-        }
+        grid.innerHTML = generateCardHTML(data);
       }
 
       function openAircraftData(registration) {
@@ -266,23 +270,7 @@
             return;
           }
 
-          if (showingTypes) {
-            grid.innerHTML = filtered.map(r => `
-              <div class="reg-card" onclick="searchAircraftType('${r.aircraft_type}')">
-                <div class="reg-rank">#${r.rank}</div>
-                <div class="reg-name">${r.aircraft_type}</div>
-                <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
-              </div>
-            `).join('');
-          } else {
-            grid.innerHTML = filtered.map(r => `
-              <div class="reg-card" onclick="openAircraftData('${r.registration}')">
-                <div class="reg-rank">#${r.rank}</div>
-                <div class="reg-name">${r.registration}</div>
-                <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
-              </div>
-            `).join('');
-          }
+          grid.innerHTML = generateCardHTML(filtered);
         }
       });
 
