@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 import httpx
 import yaml
@@ -11,6 +12,8 @@ from .aircraft_db import lookup_registration, get_cached_registration
 # Used to detect when an aircraft enters/leaves coverage
 # Only one event logged per continuous flight session
 seen_aircraft = {}
+
+logger = logging.getLogger(__name__)
 
 def normalize_registration(reg: Optional[str]) -> Optional[str]:
     """Extract and normalize flight/callsign from the registration field."""
@@ -143,7 +146,7 @@ async def run_poller(config: dict, db_path: str):
                 registry = {row[0]: (row[1], row[2], row[3], row[4]) for row in await cur.fetchall()}
                 if registry:
                     load_cache_from_db(registry)
-                    print(f"Loaded {len(registry)} registrations from cache")
+                    logger.info(f"Loaded {len(registry)} registrations from cache")
             
             # Get aircraft seen in the last 30 minutes to avoid duplicate arrivals after restarts
             import time
@@ -157,7 +160,7 @@ async def run_poller(config: dict, db_path: str):
                     # Pre-populate cache with placeholder data (will be updated on next poll)
                     seen_aircraft[hex_id.upper()] = (reg, None, None, None, None, last_seen)
     except Exception as e:
-        print(f"Startup cache load error: {e}")
+        logger.error(f"Startup cache load error: {e}")
     
     interval = int(config.get("feeder", {}).get("interval_seconds", 10))
     while True:
