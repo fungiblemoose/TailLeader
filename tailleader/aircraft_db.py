@@ -1,10 +1,23 @@
 """Simple aircraft registration lookup using multiple sources."""
 import httpx
 import asyncio
+import re
 from typing import Optional, Tuple
 
 # In-memory cache: hex -> (registration, aircraft_type, manufacturer, icao_type)
 _cache = {}
+
+def normalize_text(text: Optional[str]) -> Optional[str]:
+    """Normalize text by converting to uppercase, replacing punctuation with spaces, and stripping whitespace."""
+    if not text:
+        return None
+    # Convert to uppercase
+    text = text.upper()
+    # Replace punctuation (except spaces) with spaces
+    text = re.sub(r'[^\w\s]', ' ', text)
+    # Collapse multiple spaces
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
 
 async def lookup_registration(hex_code: str) -> Optional[Tuple[str, Optional[str], Optional[str], Optional[str]]]:
     """
@@ -31,9 +44,9 @@ async def lookup_registration(hex_code: str) -> Optional[Tuple[str, Optional[str
                 if reg:
                     reg = reg.strip().upper()
                     # Extract aircraft type information
-                    aircraft_type = aircraft.get('type')
-                    manufacturer = aircraft.get('manufacturer')
-                    icao_type = aircraft.get('icao_type')
+                    aircraft_type = normalize_text(aircraft.get('type'))
+                    manufacturer = normalize_text(aircraft.get('manufacturer'))
+                    icao_type = normalize_text(aircraft.get('icao_type'))
                     
                     result = (reg, aircraft_type, manufacturer, icao_type)
                     _cache[hex_code] = result
