@@ -176,12 +176,12 @@ def _init_patterns():
         (r"717.*|B717.*", "717", "Boeing"),
         
         # ============ BOEING 737 ============
-        # 737 NG (Next Generation) - must come before MAX to catch -8xx, -7xx, etc. customer codes
-        # These have 3-character suffixes after the series number (737-823, 737-8H4, etc.)
-        (r"737-9[0-9A-Z]{2}.*|737.*NG.*900.*|737.*900.*", "737-900", "Boeing"),
-        (r"737-8[0-9A-Z]{2}.*|737.*NG.*800.*|737.*800.*", "737-800", "Boeing"),
-        (r"737-7[0-9A-Z]{2}.*|737.*NG.*700.*|737.*700.*", "737-700", "Boeing"),
-        (r"737-6[0-9A-Z]{2}.*|737.*NG.*600.*|737.*600.*", "737-600", "Boeing"),
+        # 737 NG (Next Generation) - catch all NG variants including "737Ng XXX/W" format
+        # Pattern covers: 737-823, 737-8H4, 737Ng 823/W, 737Ng 8H4/W, etc.
+        (r"737-?[Nn]?[Gg]?\s*9[0-9A-Z]{2}.*|737.*NG.*9[0-9][0-9].*|737.*900.*", "737-900", "Boeing"),
+        (r"737-?[Nn]?[Gg]?\s*8[0-9A-Z]{2}.*|737.*NG.*8[0-9][0-9].*|737.*800.*", "737-800", "Boeing"),
+        (r"737-?[Nn]?[Gg]?\s*7[0-9A-Z]{2}.*|737.*NG.*7[0-9][0-9].*|737.*700.*", "737-700", "Boeing"),
+        (r"737-?[Nn]?[Gg]?\s*6[0-9A-Z]{2}.*|737.*NG.*6[0-9][0-9].*|737.*600.*", "737-600", "Boeing"),
         
         # 737 MAX variants - these have short codes (737-8, 737-9) or explicit MAX
         (r"737.*MAX\s*10.*|737-10(?:\s|$).*", "737 MAX 10", "Boeing"),
@@ -190,10 +190,10 @@ def _init_patterns():
         (r"737.*MAX\s*7.*|737-7\s*MAX.*|737-7(?:[\s/]|$)(?![0-9A-Z]{2}).*", "737 MAX 7", "Boeing"),
         (r"737.*MAX.*", "737 MAX", "Boeing"),
         
-        # 737 Classic - 300/400/500 series
-        (r"737-5\d{2}.*|737.*500.*", "737-500", "Boeing"),
-        (r"737-4\d{2}.*|737.*400.*", "737-400", "Boeing"),
-        (r"737-3\d{2}.*|737.*300.*", "737-300", "Boeing"),
+        # 737 Classic - 300/400/500 series (including freighter conversions like 306SF)
+        (r"737-?5[0-9A-Z]{2}.*|737\s*5[0-9A-Z]{2}.*|737.*500.*", "737-500", "Boeing"),
+        (r"737-?4[0-9A-Z]{2}.*|737\s*4[0-9A-Z]{2}.*|737.*400.*", "737-400", "Boeing"),
+        (r"737-?3[0-9A-Z]{2}.*|737\s*3[0-9A-Z]{2}.*|737.*300.*", "737-300", "Boeing"),
         
         # 737 Original - 100/200 series
         (r"737-2\d{2}.*|737.*200.*", "737-200", "Boeing"),
