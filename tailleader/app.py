@@ -228,6 +228,49 @@ async def api_backfill_types_local(limit: int = 10000):
     remaining = len(missing)
     return {"status": "ok", "processed": processed, "remaining": remaining}
 
+@app.post("/api/backfill_normalized")
+async def api_backfill_normalized(limit: int = 10000):
+    """Backfill normalized_type column for existing aircraft registry entries.
+    Processes up to `limit` entries missing normalized type.
+    """
+    import aiosqlite
+    from .aircraft_type_normalizer import normalize_aircraft_type
+    
+    processed = 0
+    remaining = 0
+    
+    async with aiosqlite.connect(db_path) as db:
+        # Count entries needing normalized type
+        async with db.execute(
+            "SELECT COUNT(*) FROM aircraft_registry WHERE normalized_type IS NULL AND (manufacturer IS NOT NULL OR aircraft_type IS NOT NULL OR icao_type IS NOT NULL)"
+        ) as cur:
+            row = await cur.fetchone()
+            remaining = int(row[0] or 0)
+        
+        if remaining == 0:
+            return {"status": "ok", "processed": 0, "remaining": 0}
+        
+        # Fetch batch to process
+        async with db.execute(
+            "SELECT hex, manufacturer, aircraft_type, icao_type FROM aircraft_registry WHERE normalized_type IS NULL AND (manufacturer IS NOT NULL OR aircraft_type IS NOT NULL OR icao_type IS NOT NULL) LIMIT ?",
+            (limit,)
+        ) as cur:
+            rows = await cur.fetchall()
+        
+        # Update each row
+        for hex_code, manufacturer, aircraft_type, icao_type in rows:
+            normalized = normalize_aircraft_type(manufacturer, aircraft_type, icao_type)
+            if normalized and normalized != "Unknown":
+                await db.execute(
+                    "UPDATE aircraft_registry SET normalized_type = ? WHERE hex = ?",
+                    (normalized, hex_code)
+                )
+                processed += 1
+        
+        await db.commit()
+    
+    return {"status": "ok", "processed": processed, "remaining": max(0, remaining - processed)}
+
 @app.get("/api/recent")
 async def api_recent(limit: int = 50):
     return await recent_events(db_path, limit)

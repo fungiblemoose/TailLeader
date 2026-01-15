@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS aircraft_registry (
   aircraft_type TEXT,
   manufacturer TEXT,
   icao_type TEXT,
+  normalized_type TEXT,  -- cached normalized display name
   last_updated INTEGER
 );
 """
@@ -136,10 +137,19 @@ async def store_registration(db_path: str, hex_code: str, registration: str,
                            icao_type: Optional[str] = None):
     """Store a hex -> registration mapping with optional aircraft type data."""
     import time
+    from .aircraft_type_normalizer import normalize_aircraft_type
+    
+    # Compute normalized type for caching
+    normalized = None
+    if manufacturer or aircraft_type or icao_type:
+        normalized = normalize_aircraft_type(manufacturer, aircraft_type, icao_type)
+        if normalized == "Unknown":
+            normalized = None
+    
     async with aiosqlite.connect(db_path) as db:
         await db.execute(
-            "INSERT OR REPLACE INTO aircraft_registry (hex, registration, aircraft_type, manufacturer, icao_type, last_updated) VALUES (?, ?, ?, ?, ?, ?)",
-            (hex_code.upper(), registration.upper(), aircraft_type, manufacturer, icao_type, int(time.time()))
+            "INSERT OR REPLACE INTO aircraft_registry (hex, registration, aircraft_type, manufacturer, icao_type, normalized_type, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (hex_code.upper(), registration.upper(), aircraft_type, manufacturer, icao_type, normalized, int(time.time()))
         )
         await db.commit()
 

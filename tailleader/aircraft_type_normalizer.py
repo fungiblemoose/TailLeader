@@ -12,25 +12,36 @@ from typing import Optional, Tuple
 MANUFACTURER_ALIASES = {
     "AIRBUS": "Airbus",
     "AIRBUS INDUSTRIE": "Airbus",
+    "AIRBUS CANADA LP": "Airbus",
+    "AIRBUS CANADA LTD PTNRSP": "Airbus",
+    "C SERIES AIRCRAFT LTD PTNRSP": "Airbus",
     "THE BOEING COMPANY": "Boeing",
     "BOEING": "Boeing",
     "BOEING COMPANY": "Boeing",
     "EMBRAER": "Embraer",
+    "EMBRAER S A": "Embraer",
+    "EMBRAER SA": "Embraer",
     "EMBRAER S.A.": "Embraer",
     "EMBRAER-EMPRESA BRASILEIRA DE AERONAUTICA": "Embraer",
+    "EMBRAER EMPRESA BRASILEIRA DE AERONAUTICA S.A.": "Embraer",
+    "EMBRAER EXECUTIVE AIRCRAFT INC": "Embraer",
     "BOMBARDIER": "Bombardier",
     "BOMBARDIER INC": "Bombardier",
     "BOMBARDIER INC.": "Bombardier",
+    "CANADAIR": "Bombardier",
+    "GATES": "Bombardier",
     "CESSNA": "Cessna",
     "CESSNA AIRCRAFT": "Cessna",
     "CESSNA AIRCRAFT COMPANY": "Cessna",
     "TEXTRON AVIATION": "Cessna",
     "TEXTRON AVIATION INC": "Cessna",
     "TEXTRON AVIATION INC.": "Cessna",
+    "REIMS": "Cessna",
     "PIPER": "Piper",
     "PIPER AIRCRAFT": "Piper",
     "PIPER AIRCRAFT INC": "Piper",
     "PIPER AIRCRAFT, INC.": "Piper",
+    "PIPER AIRCRAFT CORPORATION": "Piper",
     "CIRRUS": "Cirrus",
     "CIRRUS DESIGN": "Cirrus",
     "CIRRUS DESIGN CORP": "Cirrus",
@@ -56,6 +67,8 @@ MANUFACTURER_ALIASES = {
     "LOCKHEED": "Lockheed",
     "LOCKHEED MARTIN": "Lockheed",
     "LOCKHEED CORPORATION": "Lockheed",
+    "NORTHROP": "Northrop Grumman",
+    "NORTHROP GRUMMAN": "Northrop Grumman",
     "ATR": "ATR",
     "ATR - GIE AVIONS DE TRANSPORT REGIONAL": "ATR",
     "AVIONS DE TRANSPORT REGIONAL": "ATR",
@@ -87,6 +100,8 @@ MANUFACTURER_ALIASES = {
     "DAHER": "Daher",
     "DAHER-SOCATA": "Daher",
     "SOCATA": "Daher",
+    "HONDA AIRCRAFT COMPANY": "Honda",
+    "NORTH AMERICAN": "North American",
 }
 
 
@@ -147,6 +162,18 @@ def _init_patterns():
         
         # A380
         (r"A\s*380.*", "A380", "Airbus"),
+        
+        # ============ AIRBUS A220 / C-SERIES ============
+        (r"A\s*220.*300.*|BD-?500.*1A11.*|BCS3.*", "A220-300", "Airbus"),
+        (r"A\s*220.*100.*|BD-?500.*1A10.*|BCS1.*", "A220-100", "Airbus"),
+        (r"A\s*220.*|BD-?500.*|BCS.*|C.*SERIES.*", "A220", "Airbus"),
+        
+        # ============ AIRBUS LEGACY WIDEBODY ============
+        (r"A\s*310.*", "A310", "Airbus"),
+        (r"A\s*300.*", "A300", "Airbus"),
+        
+        # ============ BOEING 717 ============
+        (r"717.*|B717.*", "717", "Boeing"),
         
         # ============ BOEING 737 ============
         # 737 NG (Next Generation) - must come before MAX to catch -8xx, -7xx, etc. customer codes
@@ -240,6 +267,17 @@ def _init_patterns():
         (r"ERJ.*140.*|EMB.*140.*|E140.*", "ERJ-140", "Embraer"),
         (r"ERJ.*135.*|EMB.*135.*|E135.*", "ERJ-135", "Embraer"),
         
+        # Embraer Business Jets
+        (r"PRAETOR\s*600.*|EMB.*600.*", "Praetor 600", "Embraer"),
+        (r"PRAETOR\s*500.*|EMB.*545.*|E545.*", "Praetor 500", "Embraer"),
+        (r"PHENOM\s*300.*|EMB.*505.*|E55P.*", "Phenom 300", "Embraer"),
+        (r"PHENOM\s*100.*|EMB.*500.*|E50P.*", "Phenom 100", "Embraer"),
+        (r"LEGACY\s*650.*|EMB.*135BJ.*", "Legacy 650", "Embraer"),
+        (r"LEGACY\s*600.*", "Legacy 600", "Embraer"),
+        (r"LEGACY\s*500.*|EMB.*550.*", "Legacy 500", "Embraer"),
+        (r"LEGACY\s*450.*", "Legacy 450", "Embraer"),
+        (r"LINEAGE\s*1000.*", "Lineage 1000", "Embraer"),
+        
         # ============ BOMBARDIER/CANADAIR ============
         # CRJ Series
         (r"CRJ.*1000.*|CL-?600.*2E25.*", "CRJ-1000", "Bombardier"),
@@ -249,6 +287,34 @@ def _init_patterns():
         (r"CRJ.*200.*|CL-?600.*2B19.*", "CRJ-200", "Bombardier"),
         (r"CRJ.*100.*", "CRJ-100", "Bombardier"),
         (r"CRJ.*", "CRJ", "Bombardier"),
+        
+        # Challenger Series
+        (r"CHALLENGER\s*650.*|CL-?600.*2B16.*|CL65.*", "Challenger 650", "Bombardier"),
+        (r"CHALLENGER\s*605.*|CL-?605.*", "Challenger 605", "Bombardier"),
+        (r"CHALLENGER\s*604.*|CL-?604.*|CL64.*", "Challenger 604", "Bombardier"),
+        (r"CHALLENGER\s*350.*|BD-?100.*1A10.*|CL35.*", "Challenger 350", "Bombardier"),
+        (r"CHALLENGER\s*300.*|BD-?100.*|CL30.*", "Challenger 300", "Bombardier"),
+        (r"CHALLENGER.*", "Challenger", "Bombardier"),
+        
+        # Global Series
+        (r"GLOBAL\s*7500.*|BD-?700.*2A12.*|GL7T.*", "Global 7500", "Bombardier"),
+        (r"GLOBAL\s*8000.*", "Global 8000", "Bombardier"),
+        (r"GLOBAL\s*6500.*", "Global 6500", "Bombardier"),
+        (r"GLOBAL\s*6000.*|BD-?700.*1A10.*|GL6T.*", "Global 6000", "Bombardier"),
+        (r"GLOBAL\s*5500.*", "Global 5500", "Bombardier"),
+        (r"GLOBAL\s*5000.*|BD-?700.*1A11.*|GL5T.*", "Global 5000", "Bombardier"),
+        (r"GLOBAL\s*EXPRESS.*|GLXS.*|GLEX.*", "Global Express", "Bombardier"),
+        (r"GLOBAL.*", "Global", "Bombardier"),
+        
+        # Learjet (Bombardier)
+        (r"LEARJET\s*75.*|LJ75.*", "Learjet 75", "Bombardier"),
+        (r"LEARJET\s*70.*|LJ70.*", "Learjet 70", "Bombardier"),
+        (r"LEARJET\s*60.*|LJ60.*", "Learjet 60", "Bombardier"),
+        (r"LEARJET\s*45.*|LJ45.*", "Learjet 45", "Bombardier"),
+        (r"LEARJET\s*40.*|LJ40.*", "Learjet 40", "Bombardier"),
+        (r"LEARJET\s*35.*|LJ35.*", "Learjet 35", "Bombardier"),
+        (r"LEARJET\s*31.*|LJ31.*", "Learjet 31", "Bombardier"),
+        (r"LEARJET.*", "Learjet", "Bombardier"),
         
         # Dash 8 / Q Series
         (r"DHC-?8.*400.*|Q400.*|DASH\s*8.*400.*", "Dash 8-400", "De Havilland Canada"),
@@ -332,6 +398,7 @@ def _init_patterns():
         (r"G500.*", "G500", "Gulfstream"),
         (r"G450.*|GIV.*450.*", "G450", "Gulfstream"),
         (r"G280.*", "G280", "Gulfstream"),
+        (r"G200.*|G-?200.*|IAI.*200.*", "G200", "Gulfstream"),
         (r"GV(?!I).*|G-?V(?!I).*", "G-V", "Gulfstream"),
         (r"GIV.*|G-?IV.*", "G-IV", "Gulfstream"),
         (r"GIII.*|G-?III.*", "G-III", "Gulfstream"),
@@ -345,15 +412,46 @@ def _init_patterns():
         (r"FALCON\s*50.*", "Falcon 50", "Dassault"),
         (r"FALCON.*", "Falcon", "Dassault"),
         
-        # ============ LEARJET ============
-        (r"LEARJET\s*75.*|LJ75.*", "Learjet 75", "Learjet"),
-        (r"LEARJET\s*70.*|LJ70.*", "Learjet 70", "Learjet"),
-        (r"LEARJET\s*60.*|LJ60.*", "Learjet 60", "Learjet"),
-        (r"LEARJET\s*45.*|LJ45.*", "Learjet 45", "Learjet"),
-        (r"LEARJET\s*40.*|LJ40.*", "Learjet 40", "Learjet"),
-        (r"LEARJET\s*35.*|LJ35.*", "Learjet 35", "Learjet"),
-        (r"LEARJET\s*31.*|LJ31.*", "Learjet 31", "Learjet"),
-        (r"LEARJET.*", "Learjet", "Learjet"),
+        # ============ HAWKER / BEECHJET ============
+        (r"HAWKER\s*900.*|HA-?900.*", "Hawker 900", "Beechcraft"),
+        (r"HAWKER\s*850.*|HA-?850.*", "Hawker 850", "Beechcraft"),
+        (r"HAWKER\s*800.*|125.*800.*|HA-?800.*|H25B.*", "Hawker 800", "Beechcraft"),
+        (r"HAWKER\s*750.*|HA-?750.*", "Hawker 750", "Beechcraft"),
+        (r"HAWKER\s*4000.*|HA-?4000.*", "Hawker 4000", "Beechcraft"),
+        (r"BEECHJET\s*400.*|400\s*A.*|BE40.*", "Beechjet 400", "Beechcraft"),
+        (r"HAWKER.*", "Hawker", "Beechcraft"),
+        
+        # ============ HONDA ============
+        (r"HONDAJET.*|HA-?420.*|HDJT.*", "HondaJet", "Honda"),
+        
+        # ============ MOONEY ============
+        (r"M20.*|MOONEY.*", "M20", "Mooney"),
+        
+        # ============ MILITARY / GOVERNMENT ============
+        # Transport
+        (r"C-?17.*|GLOBEMASTER.*", "C-17 Globemaster III", "Boeing"),
+        (r"C-?130J.*|C130J.*|HERCULES.*J.*|C30J.*", "C-130J Hercules", "Lockheed"),
+        (r"C-?130.*|HERCULES.*", "C-130 Hercules", "Lockheed"),
+        (r"C-?5.*|GALAXY.*", "C-5 Galaxy", "Lockheed"),
+        
+        # Tankers
+        (r"KC-?135.*", "KC-135 Stratotanker", "Boeing"),
+        (r"KC-?10.*", "KC-10 Extender", "McDonnell Douglas"),
+        (r"KC-?46.*", "KC-46 Pegasus", "Boeing"),
+        
+        # Trainers
+        (r"T-?38.*|TALON.*", "T-38 Talon", "Northrop Grumman"),
+        (r"T-?6.*TEXAN.*|AT-?6.*", "T-6 Texan II", "Beechcraft"),
+        
+        # Fighters (common sightings)
+        (r"F-?15.*|EAGLE.*", "F-15 Eagle", "Boeing"),
+        (r"F-?16.*|FALCON.*FIGHT.*|VIPER.*", "F-16 Fighting Falcon", "Lockheed"),
+        (r"F-?18.*|HORNET.*", "F/A-18 Hornet", "Boeing"),
+        (r"F-?22.*|RAPTOR.*", "F-22 Raptor", "Lockheed"),
+        
+        # Patrol/Recon
+        (r"P-?8.*|POSEIDON.*", "P-8 Poseidon", "Boeing"),
+        (r"E-?3.*|AWACS.*|SENTRY.*", "E-3 Sentry", "Boeing"),
         
         # ============ DIAMOND ============
         (r"DA-?62.*", "DA62", "Diamond"),
