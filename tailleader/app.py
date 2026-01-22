@@ -43,7 +43,7 @@ async def api_all_registrations(window: str = Query("all", pattern="^(24h|30d|al
             import time
             since = int(time.time()) - 24 * 3600
             q = (
-                "SELECT ar.registration as tail, COUNT(*) as c "
+                "SELECT ar.registration as tail, COUNT(*) as c, MAX(ar.normalized_type) as ntype "
                 "FROM events e "
                 "JOIN aircraft_registry ar ON e.hex = ar.hex "
                 "WHERE e.observed_at >= ? AND ar.registration IS NOT NULL "
@@ -55,7 +55,7 @@ async def api_all_registrations(window: str = Query("all", pattern="^(24h|30d|al
             import time
             since = int(time.time()) - 30 * 24 * 3600
             q = (
-                "SELECT ar.registration as tail, COUNT(*) as c "
+                "SELECT ar.registration as tail, COUNT(*) as c, MAX(ar.normalized_type) as ntype "
                 "FROM events e "
                 "JOIN aircraft_registry ar ON e.hex = ar.hex "
                 "WHERE e.observed_at >= ? AND ar.registration IS NOT NULL "
@@ -65,7 +65,7 @@ async def api_all_registrations(window: str = Query("all", pattern="^(24h|30d|al
                 rows = await cur.fetchall()
         else:  # all
             q = (
-                "SELECT ar.registration as tail, COUNT(*) as c "
+                "SELECT ar.registration as tail, COUNT(*) as c, MAX(ar.normalized_type) as ntype "
                 "FROM events e "
                 "JOIN aircraft_registry ar ON e.hex = ar.hex "
                 "WHERE ar.registration IS NOT NULL "
@@ -73,8 +73,8 @@ async def api_all_registrations(window: str = Query("all", pattern="^(24h|30d|al
             )
             async with db.execute(q) as cur:
                 rows = await cur.fetchall()
-        
-        return [dict(rank=i+1, registration=tail, count=c) for i, (tail, c) in enumerate(rows)]
+
+        return [dict(rank=i+1, registration=tail, count=c, normalized_type=ntype) for i, (tail, c, ntype) in enumerate(rows)]
 
 @app.get("/api/all_aircraft_types")
 async def api_all_aircraft_types(window: str = Query("all", pattern="^(24h|30d|all)$"), source: str = Query("events", pattern="^(events|registry)$")):

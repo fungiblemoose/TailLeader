@@ -62,6 +62,11 @@
         font-size: 14px;
         color: #94a3b8;
       }
+      .reg-type {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 4px;
+      }
       .back-link {
         display: inline-block;
         margin-bottom: 20px;
@@ -263,6 +268,7 @@
               <div class="reg-rank">#${r.rank}</div>
               <div class="reg-name">${r.registration}</div>
               <div class="reg-count">${r.count} observation${r.count !== 1 ? 's' : ''}</div>
+              ${r.normalized_type ? `<div class="reg-type">${escapeHTML(r.normalized_type)}</div>` : ''}
             </div>
           `).join('');
         }
