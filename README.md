@@ -22,7 +22,7 @@ Common paths for other feeders:
 - Readsb: `/run/readsb/aircraft.json`
 - tar1090: `/run/tar1090/aircraft.json`
 
-Edit `config.yaml` or `.env` to change the path:
+Create `tailleader/config.yaml` (or set `TL_CONFIG` to your config path), then edit:
 ```yaml
 feeder:
   mode: file
@@ -50,7 +50,9 @@ Visit: http://<pi-ip>:8088
 
 - ADS-B feed file default: /run/adsbexchange-feed/aircraft.json
 - Port: 8088
-- Edit config.yaml or .env (see examples below).
+- App config is YAML-based: default is `tailleader/config.yaml` (falls back to `tailleader/config.example.yaml`).
+- Set `TL_CONFIG=/path/to/config.yaml` to use a different config file.
+- `.env` is not auto-loaded by the app; export env vars in your shell/service instead.
 
 ## Systemd (auto-start on boot)
 
@@ -74,10 +76,24 @@ docker build -t tailleader:latest .
 docker compose up -d
 ```
 
+The included compose file points `TL_CONFIG` at `/app/config.yaml` using `config.yaml.example`.
+For real deployments, mount your own config file and set `TL_CONFIG` accordingly.
+
+## System Controls (optional)
+
+The restart/reboot API endpoints are disabled by default.
+
+To enable them safely:
+1. Set `admin.enable_system_controls: true` in config (or `TL_ENABLE_SYSTEM_CONTROLS=true`).
+2. Set a strong admin key via `admin.api_key` or `TL_ADMIN_KEY`.
+3. Send the key in the `x-tailleader-admin-key` request header.
+
+Without these settings, `/api/restart_service` and `/api/restart_pi` will reject requests.
+
 ## Packaging Notes
 - SQLite DB path: ~/tailleader/data/tailleader.sqlite
 - Static assets: tailleader/static/
-- APIs: /api/top, /api/recent, /api/live, /api/stats, /api/lookup_stats
+- APIs: /api/top, /api/recent, /api/live, /api/stats, /api/lookup_stats, /api/system_controls
 
 ## License
 MIT License - see LICENSE file.
@@ -88,7 +104,7 @@ The map displays your feeder station location as a small neon green house icon. 
 
 ### Custom Location (Optional)
 
-If you want to override the auto-detected location, edit `config.yaml`:
+If you want to override the auto-detected location, edit `tailleader/config.yaml`:
 
 ```yaml
 station:

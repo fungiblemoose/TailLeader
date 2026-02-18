@@ -26,6 +26,14 @@ self.addEventListener('install', event => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', event => {
+  const requestUrl = new URL(event.request.url);
+
+  // Never cache API responses; keep dashboard data truly live.
+  if (requestUrl.origin === self.location.origin && requestUrl.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -34,24 +42,22 @@ self.addEventListener('fetch', event => {
           return response;
         }
         return fetch(event.request).then(
-          response => {
+          networkResponse => {
             // Check if valid response
-            if(!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
+            if(!networkResponse || networkResponse.status !== 200) {
+              return networkResponse;
             }
-            
-            // Clone the response
-            const responseToCache = response.clone();
-            
-            // Cache API responses for offline access
-            if (event.request.url.includes('/api/')) {
+
+            // Cache same-origin static resources for offline shell.
+            if (requestUrl.origin === self.location.origin && requestUrl.pathname.startsWith('/static/')) {
+              const responseToCache = networkResponse.clone();
               caches.open(CACHE_NAME)
                 .then(cache => {
                   cache.put(event.request, responseToCache);
                 });
             }
-            
-            return response;
+
+            return networkResponse;
           }
         ).catch(() => {
           // Return offline page or cached data

@@ -7,3 +7,9 @@ poller:
 feeder:
   mode: file
   path: /run/adsbexchange-feed/aircraft.json
+
+# Optional admin controls for restart/reboot APIs.
+# Keep disabled unless you intentionally need these endpoints.
+admin:
+  enable_system_controls: false
+  api_key: ""

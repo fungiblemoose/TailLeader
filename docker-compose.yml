@@ -5,7 +5,7 @@ services:
       - "8088:8088"
     restart: unless-stopped
     environment:
-      - FEED_MODE=file
-      - FEED_PATH=/run/adsbexchange-feed/aircraft.json
+      - TL_CONFIG=/app/config.yaml
     volumes:
       - ./data:/app/data
+      - ./config.yaml.example:/app/config.yaml:ro

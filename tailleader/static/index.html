@@ -367,9 +367,9 @@
                 </div>
               </div>
               <div class="status-card-spacer"></div>
-              <div class="status-card-actions">
-                <button id="restartServiceBtn" onclick="restartService()">🔄 Restart</button>
-                <button id="restartPiBtn" onclick="restartPi()">⚡ Reboot Pi</button>
+              <div class="status-card-actions" id="statusCardActions">
+                <button class="system-control" id="restartServiceBtn" onclick="restartService()">🔄 Restart</button>
+                <button class="system-control" id="restartPiBtn" onclick="restartPi()">⚡ Reboot Pi</button>
                 <a href="https://github.com/fungiblemoose/TailLeader" target="_blank" rel="noopener">📦 GitHub</a>
               </div>
             </div>
@@ -441,14 +441,53 @@
         }
       }
 
+      let systemControlsEnabled = false;
+
+      async function loadSystemControls() {
+        const actions = document.getElementById('statusCardActions');
+        if (!actions) return;
+        const controlButtons = actions.querySelectorAll('.system-control');
+        try {
+          const res = await fetch('/api/system_controls');
+          const data = await res.json();
+          systemControlsEnabled = Boolean(data.enabled);
+        } catch (e) {
+          systemControlsEnabled = false;
+        }
+        controlButtons.forEach(btn => {
+          btn.style.display = systemControlsEnabled ? 'block' : 'none';
+        });
+      }
+
+      function promptAdminKey(actionLabel) {
+        const key = window.prompt(`Enter admin key to ${actionLabel}:`);
+        if (!key || !key.trim()) {
+          return null;
+        }
+        return key.trim();
+      }
+
       async function restartService() {
         if (!confirm('Are you sure you want to restart the TailLeader service?')) return;
+        const adminKey = promptAdminKey('restart service');
+        if (!adminKey) return;
         const btn = document.getElementById('restartServiceBtn');
         btn.disabled = true;
         btn.textContent = '⏳ Restarting...';
         try {
-          const res = await fetch('/api/restart_service', { method: 'POST' });
+          const res = await fetch('/api/restart_service', {
+            method: 'POST',
+            headers: {
+              'x-tailleader-admin-key': adminKey
+            }
+          });
           const data = await res.json();
+          if (!res.ok) {
+            alert('Error: ' + (data.detail || data.message || `HTTP ${res.status}`));
+            btn.disabled = false;
+            btn.textContent = '🔄 Restart';
+            return;
+          }
           if (data.status === 'success') {
             alert('Service restart initiated. Page will refresh in a moment...');
             setTimeout(() => location.reload(), 2000);
@@ -466,12 +505,25 @@
 
       async function restartPi() {
         if (!confirm('Are you sure you want to restart the Pi? You will lose connection.')) return;
+        const adminKey = promptAdminKey('reboot Pi');
+        if (!adminKey) return;
         const btn = document.getElementById('restartPiBtn');
         btn.disabled = true;
         btn.textContent = '⏳ Rebooting...';
         try {
-          const res = await fetch('/api/restart_pi', { method: 'POST' });
+          const res = await fetch('/api/restart_pi', {
+            method: 'POST',
+            headers: {
+              'x-tailleader-admin-key': adminKey
+            }
+          });
           const data = await res.json();
+          if (!res.ok) {
+            alert('Error: ' + (data.detail || data.message || `HTTP ${res.status}`));
+            btn.disabled = false;
+            btn.textContent = '⚡ Reboot Pi';
+            return;
+          }
           if (data.status === 'success') {
             alert('Pi restart initiated. It will be offline for ~1 minute.');
           } else {
@@ -487,6 +539,7 @@
       }
 
       // Initial feed status check
+      loadSystemControls();
       refreshFeedStatus();
       // Refresh feed status every 30 seconds
       setInterval(refreshFeedStatus, 30000);

@@ -1,8 +1,9 @@
 import asyncio
+import hmac
 import os
 import yaml
-from fastapi import FastAPI, Query
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi import FastAPI, Query, Request, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from .db import ensure_db, top_registrations, recent_events
 from .poller import run_poller
@@ -21,6 +22,47 @@ data_dir = config.get("server", {}).get("data_dir", "./data")
 db_path = os.path.join(data_dir, "tailleader.sqlite")
 
 app = FastAPI()
+
+
+def _as_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _system_controls_enabled() -> bool:
+    admin_cfg = config.get("admin", {}) or {}
+    env_flag = os.environ.get("TL_ENABLE_SYSTEM_CONTROLS")
+    if env_flag is not None:
+        return _as_bool(env_flag)
+    return _as_bool(admin_cfg.get("enable_system_controls"))
+
+
+def _system_controls_key() -> str:
+    env_key = os.environ.get("TL_ADMIN_KEY")
+    if env_key:
+        return env_key
+    admin_cfg = config.get("admin", {}) or {}
+    cfg_key = admin_cfg.get("api_key")
+    if isinstance(cfg_key, str):
+        return cfg_key.strip()
+    return ""
+
+
+def _require_system_controls_access(request: Request):
+    if not SYSTEM_CONTROLS_ENABLED:
+        raise HTTPException(status_code=403, detail="System controls are disabled")
+    if not SYSTEM_CONTROLS_KEY:
+        raise HTTPException(status_code=503, detail="Admin key is not configured")
+    provided = request.headers.get("x-tailleader-admin-key", "")
+    if not provided or not hmac.compare_digest(provided, SYSTEM_CONTROLS_KEY):
+        raise HTTPException(status_code=401, detail="Invalid admin key")
+
+
+SYSTEM_CONTROLS_ENABLED = _system_controls_enabled()
+SYSTEM_CONTROLS_KEY = _system_controls_key()
 
 @app.on_event("startup")
 async def startup():
@@ -383,10 +425,18 @@ async def api_station():
         "name": (station.get("name") if station else None) or "ADS-B Station"
     }
 
+
+@app.get("/api/system_controls")
+async def api_system_controls():
+    """Return whether restart/reboot controls are enabled."""
+    return {"enabled": SYSTEM_CONTROLS_ENABLED}
+
+
 @app.post("/api/restart_service")
-async def restart_service():
+async def restart_service(request: Request):
     """Restart the tailleader systemd service"""
     import subprocess
+    _require_system_controls_access(request)
     try:
         subprocess.run(["sudo", "systemctl", "restart", "tailleader.service"], check=True)
         return {"status": "success", "message": "Service restart initiated"}
@@ -394,9 +444,10 @@ async def restart_service():
         return {"status": "error", "message": str(e)}
 
 @app.post("/api/restart_pi")
-async def restart_pi():
+async def restart_pi(request: Request):
     """Restart the Raspberry Pi"""
     import subprocess
+    _require_system_controls_access(request)
     try:
         subprocess.run(["sudo", "shutdown", "-r", "now"], check=True)
         return {"status": "success", "message": "Pi restart initiated"}
