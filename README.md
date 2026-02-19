@@ -1,15 +1,24 @@
 # TailLeader
 
-TailLeader is a lightweight FastAPI app for tracking ADS-B aircraft tail numbers (registrations) and displaying a tail-only leaderboard with a live map and system stats.
+TailLeader is a lightweight FastAPI app that tracks ADS-B aircraft by tail number (registration) and displays a live leaderboard showing which aircraft visit your airspace most. Built for home ADS-B setups.
 
-- Backend: FastAPI + SQLite (async via aiosqlite)
-- Poller: Reads ADS-B feed (file or HTTP) every 10s, session-based dedup (10 min gap)
-- Registry: Resolves tails via ADSBdb and caches hex→registration
-- Frontend: Vanilla JS + Chart.js + Leaflet
+- **Backend:** FastAPI + SQLite (async via aiosqlite)
+- **Poller:** Reads ADS-B feed every 10s with session-based deduplication (10-min gap)
+- **Registry:** Resolves tail numbers via ADSBdb with local hex→registration cache
+- **Frontend:** Vanilla JS + Chart.js + Leaflet — no build step required
+
+## Features
+
+- **Live Leaderboard** — Top tail numbers ranked by visit frequency, updated in real-time
+- **Live Map** — Leaflet map showing all aircraft currently in range, with your feeder station marked
+- **Recent Activity** — A rolling feed of aircraft seen in the last session window
+- **Registration Lookup** — Auto-resolves hex codes to readable tail numbers (e.g. `N12345`) via ADSBdb
+- **System Stats** — Uptime, database size, feed health at a glance
+- **Systemd Integration** — Runs as a service, auto-restarts on crash
 
 ## Requirements
 
-TailLeader requires an **ADS-B receiver** feeding aircraft data. It reads from a JSON file written by feeder software like:
+TailLeader needs an **ADS-B receiver** feeding aircraft data. It reads from a JSON file written by feeder software like:
 - **dump1090** (FlightAware, Mutability, or FA version)
 - **readsb** (modern dump1090 fork)
 - **tar1090** (includes readsb)
@@ -22,52 +31,63 @@ Common paths for other feeders:
 - Readsb: `/run/readsb/aircraft.json`
 - tar1090: `/run/tar1090/aircraft.json`
 
-Create `tailleader/config.yaml` (or set `TL_CONFIG` to your config path), then edit:
-```yaml
-feeder:
-  mode: file
-  path: /run/dump1090-fa/aircraft.json
-```
-
-**Hardware**: Any Raspberry Pi with an RTL-SDR or similar ADS-B receiver. TailLeader itself is lightweight and works alongside existing feeders.
-
-**Python**: 3.9+ (works with the default Python on Raspberry Pi OS bullseye).
+**Hardware**: Any Raspberry Pi with an RTL-SDR or similar ADS-B receiver.  
+**Python**: 3.9+ (works with default Python on Raspberry Pi OS bullseye).
 
 ## Quick Start (Raspberry Pi)
 
 ```bash
-# Install dependencies
+# 1. Clone the repo
+git clone https://github.com/fungiblemoose/TailLeader.git
+cd TailLeader
+
+# 2. Install dependencies
 pip3 install --break-system-packages fastapi uvicorn httpx aiosqlite pydantic python-dotenv PyYAML psutil
 
-# Run
-cd /home/pi/tailleader
+# 3. Copy and edit config
+cp tailleader/config.example.yaml tailleader/config.yaml
+nano tailleader/config.yaml   # Set your feeder path and location
+
+# 4. Run
 python3 -m uvicorn tailleader.app:app --host 0.0.0.0 --port 8088
 ```
 
-Visit: http://<pi-ip>:8088
+Then open `http://<pi-ip>:8088` in your browser.
 
-## Config
+## Configuration
 
-- ADS-B feed file default: /run/adsbexchange-feed/aircraft.json
-- Port: 8088
-- App config is YAML-based: default is `tailleader/config.yaml` (falls back to `tailleader/config.example.yaml`).
-- Set `TL_CONFIG=/path/to/config.yaml` to use a different config file.
-- `.env` is not auto-loaded by the app; export env vars in your shell/service instead.
+Config lives at `tailleader/config.yaml` (set `TL_CONFIG` to override the path):
 
-## Systemd (auto-start on boot)
+```yaml
+feeder:
+  mode: file
+  path: /run/adsbexchange-feed/aircraft.json   # Path to your aircraft.json
 
-See packaging/tailleader.service for a unit that:
-- runs as user pi
-- restarts on crash
-- enforces MemoryMax=500M
+station:
+  latitude: 40.7128       # Your latitude (auto-detected from adsbexchange config if blank)
+  longitude: -74.0060     # Your longitude
+  name: "My ADS-B Station"
 
-Enable it:
+admin:
+  enable_system_controls: false   # Set true to enable restart API (requires api_key)
+  api_key: ""
+```
+
+**Note:** `.env` is not auto-loaded by the app. Export environment variables in your shell or systemd unit.
+
+## Auto-Start with Systemd
+
 ```bash
 sudo cp packaging/tailleader.service /etc/systemd/system/tailleader.service
 sudo systemctl daemon-reload
 sudo systemctl enable tailleader.service
 sudo systemctl start tailleader.service
+
+# Check status
+sudo systemctl status tailleader.service
 ```
+
+The included unit file runs as user `pi`, restarts on crash, and enforces a 500MB memory cap.
 
 ## Docker (optional)
 
@@ -76,44 +96,42 @@ docker build -t tailleader:latest .
 docker compose up -d
 ```
 
-The included compose file points `TL_CONFIG` at `/app/config.yaml` using `config.yaml.example`.
-For real deployments, mount your own config file and set `TL_CONFIG` accordingly.
-
-## System Controls (optional)
-
-The restart/reboot API endpoints are disabled by default.
-
-To enable them safely:
-1. Set `admin.enable_system_controls: true` in config (or `TL_ENABLE_SYSTEM_CONTROLS=true`).
-2. Set a strong admin key via `admin.api_key` or `TL_ADMIN_KEY`.
-3. Send the key in the `x-tailleader-admin-key` request header.
-
-Without these settings, `/api/restart_service` and `/api/restart_pi` will reject requests.
-
-## Packaging Notes
-- SQLite DB path: ~/tailleader/data/tailleader.sqlite
-- Static assets: tailleader/static/
-- APIs: /api/top, /api/recent, /api/live, /api/stats, /api/lookup_stats, /api/system_controls
-
-## License
-MIT License - see LICENSE file.
-
-## Feeder Location Marker
-
-The map displays your feeder station location as a small neon green house icon. **The location is automatically detected from your `/etc/default/adsbexchange` configuration**, so no additional setup is needed!
-
-### Custom Location (Optional)
-
-If you want to override the auto-detected location, edit `tailleader/config.yaml`:
+Mount your own config file for real deployments:
 
 ```yaml
-station:
-  latitude: 40.7128      # Your latitude
-  longitude: -74.0060    # Your longitude
-  name: "My ADS-B Station"
+# docker-compose.yml
+volumes:
+  - ./config.yaml:/app/config.yaml
+environment:
+  - TL_CONFIG=/app/config.yaml
 ```
 
-Restart the service to apply changes:
-```bash
-sudo systemctl restart tailleader.service
-```
+## Feeder Location
+
+The map shows your station as a neon green house icon. Location is **auto-detected from `/etc/default/adsbexchange`** if you use the ADSBx feeder — no extra setup needed.
+
+To override, set `station.latitude`, `station.longitude`, and `station.name` in `config.yaml`, then restart the service.
+
+## API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/top` | Top tail numbers by visit count |
+| `GET /api/recent` | Recently seen aircraft |
+| `GET /api/live` | Aircraft currently in range |
+| `GET /api/stats` | Database and feed statistics |
+| `GET /api/lookup_stats` | Registration lookup cache stats |
+| `POST /api/restart_service` | Restart TailLeader (requires admin key) |
+| `POST /api/restart_pi` | Reboot the Pi (requires admin key) |
+
+## System Controls (Optional)
+
+Restart/reboot endpoints are disabled by default. To enable:
+
+1. Set `admin.enable_system_controls: true` in config
+2. Set a strong `admin.api_key`
+3. Pass the key in the `x-tailleader-admin-key` request header
+
+## License
+
+MIT License — see LICENSE file.
