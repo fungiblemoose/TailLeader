@@ -5,7 +5,7 @@ import yaml
 from fastapi import FastAPI, Query, Request, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from .db import ensure_db, top_registrations, recent_events
+from .db import ensure_db, top_registrations, recent_events, day_records
 from .poller import run_poller
 from .poller import periodic_lookup_refresher
 
@@ -316,6 +316,11 @@ async def api_backfill_normalized(limit: int = 10000):
 @app.get("/api/recent")
 async def api_recent(limit: int = 50):
     return await recent_events(db_path, limit)
+
+@app.get("/api/day_records")
+async def api_day_records(limit: int = Query(10, ge=1, le=100)):
+    """All-time daily leaderboards: days with the most planes and most aircraft types."""
+    return await day_records(db_path, limit)
 
 @app.get("/api/live")
 async def api_live():

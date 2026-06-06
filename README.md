@@ -117,6 +117,7 @@ To override, set `station.latitude`, `station.longitude`, and `station.name` in 
 | Endpoint | Description |
 |----------|-------------|
 | `GET /api/top` | Top tail numbers by visit count |
+| `GET /api/day_records` | All-time daily records: days with the most planes and most aircraft types |
 | `GET /api/recent` | Recently seen aircraft |
 | `GET /api/live` | Aircraft currently in range |
 | `GET /api/stats` | Database and feed statistics |

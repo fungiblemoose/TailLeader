@@ -102,6 +102,37 @@ async def top_registrations(db_path: str, window: str, limit: int = 20):
             async with db.execute(q, (limit,)) as cur:
                 return [dict(registration=tail, count=c) for tail, c in await cur.fetchall()]
 
+async def day_records(db_path: str, limit: int = 10):
+    """All-time daily leaderboards:
+    - most_planes: days ranked by the number of distinct aircraft seen
+    - most_types: days ranked by the number of distinct aircraft types seen
+    Dates are computed in UTC (YYYY-MM-DD) to match daily_summary.
+    """
+    async with aiosqlite.connect(db_path) as db:
+        # Days with the most distinct aircraft (by hex)
+        most_planes_q = (
+            "SELECT strftime('%Y-%m-%d', datetime(observed_at, 'unixepoch')) as day, "
+            "COUNT(DISTINCT hex) as c "
+            "FROM events "
+            "GROUP BY day ORDER BY c DESC, day DESC LIMIT ?"
+        )
+        async with db.execute(most_planes_q, (limit,)) as cur:
+            most_planes = [dict(date=day, count=c) for day, c in await cur.fetchall()]
+
+        # Days with the most distinct aircraft types (by normalized type)
+        most_types_q = (
+            "SELECT strftime('%Y-%m-%d', datetime(e.observed_at, 'unixepoch')) as day, "
+            "COUNT(DISTINCT ar.normalized_type) as c "
+            "FROM events e "
+            "JOIN aircraft_registry ar ON e.hex = ar.hex "
+            "WHERE ar.normalized_type IS NOT NULL "
+            "GROUP BY day ORDER BY c DESC, day DESC LIMIT ?"
+        )
+        async with db.execute(most_types_q, (limit,)) as cur:
+            most_types = [dict(date=day, count=c) for day, c in await cur.fetchall()]
+
+    return {"most_planes": most_planes, "most_types": most_types}
+
 async def recent_events(db_path: str, limit: int = 50):
     async with aiosqlite.connect(db_path) as db:
         # Join with aircraft_registry to include tail number as 'tail'

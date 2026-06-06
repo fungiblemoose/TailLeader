@@ -295,6 +295,45 @@
         font-weight: 600;
         margin-left: 8px;
       }
+      /* All-Time Daily Records */
+      .records-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+      .records-card {
+        background: var(--bg-secondary, #1e293b);
+        border: 1px solid var(--border, #334155);
+        border-radius: 8px;
+        padding: 16px;
+      }
+      .records-card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #e5e7eb;
+      }
+      .records-card-sub {
+        font-size: 12px;
+        color: #94a3b8;
+        margin: 4px 0 12px;
+      }
+      .records-rank {
+        color: #64748b;
+        font-weight: 600;
+      }
+      .records-rank.top {
+        color: #fbbf24;
+      }
+      .records-count {
+        text-align: right;
+        font-weight: 700;
+        color: #3b82f6;
+      }
+      @media (max-width: 768px) {
+        .records-grid {
+          grid-template-columns: 1fr;
+        }
+      }
       /* Empty state message */
       .empty-state {
         text-align: center;
@@ -391,6 +430,48 @@
           </div>
           <div class="chart-wrapper">
             <canvas id="topChart"></canvas>
+          </div>
+        </section>
+
+        <section class="records-section">
+          <div class="section-header">
+            <h2>🏆 All-Time Daily Records</h2>
+            <p class="section-meta">Your record-breaking days of plane spotting</p>
+            <p class="last-updated" id="recordsLastUpdated">Last updated: --</p>
+          </div>
+          <div class="records-grid">
+            <div class="records-card">
+              <div class="records-card-title">✈️ Most Planes Seen</div>
+              <div class="records-card-sub">Days with the most distinct aircraft</div>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 40px;">#</th>
+                      <th>Date</th>
+                      <th style="text-align: right;">Planes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mostPlanesBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="records-card">
+              <div class="records-card-title">🛩️ Most Plane Types Seen</div>
+              <div class="records-card-sub">Days with the most distinct aircraft types</div>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 40px;">#</th>
+                      <th>Date</th>
+                      <th style="text-align: right;">Types</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mostTypesBody"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 

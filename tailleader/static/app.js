@@ -78,6 +78,11 @@ async function fetchStats() {
   return res.json();
 }
 
+async function fetchDayRecords() {
+  const res = await fetch(`/api/day_records?limit=10`);
+  return res.json();
+}
+
 async function fetchLookupStats() {
   const res = await fetch(`/api/lookup_stats`);
   return res.json();
@@ -381,6 +386,52 @@ function renderRecent(rows) {
   }
 }
 
+function formatRecordDate(dateStr) {
+  // dateStr is YYYY-MM-DD (UTC). Render as a friendly local-agnostic label.
+  const parts = (dateStr || '').split('-');
+  if (parts.length !== 3) return dateStr || '';
+  const d = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+function renderRecordRows(tbody, rows, unit) {
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!rows || rows.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="3" style="text-align: center; padding: 24px; color: #64748b; font-size: 13px;">No records yet — keep spotting! ✈️</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+    const rankClass = i < 3 ? 'records-rank top' : 'records-rank';
+    tr.innerHTML = `
+      <td class="${rankClass}">${medal}</td>
+      <td>${formatRecordDate(r.date)}</td>
+      <td class="records-count">${r.count.toLocaleString()}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderDayRecords(data) {
+  renderRecordRows(document.getElementById('mostPlanesBody'), data && data.most_planes, 'planes');
+  renderRecordRows(document.getElementById('mostTypesBody'), data && data.most_types, 'types');
+  const el = document.getElementById('recordsLastUpdated');
+  if (el) el.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+}
+
+async function refreshDayRecords() {
+  try {
+    const data = await fetchDayRecords();
+    renderDayRecords(data);
+  } catch (e) {
+    console.log('Day records fetch failed:', e);
+  }
+}
+
 async function refresh() {
   const top = await fetchTop(currentWindow);
   renderChart(top);
@@ -422,12 +473,14 @@ refresh();
 refreshMap();
 refreshStats();
 refreshLookupStatus();
+refreshDayRecords();
 
 // Refresh data and map periodically
 setInterval(refresh, 15000);
 setInterval(refreshMap, 3000); // Update map more frequently for smooth movement
 setInterval(refreshStats, 5000); // Update system stats every 5 seconds
 setInterval(refreshLookupStatus, 7000); // Update lookup status periodically
+setInterval(refreshDayRecords, 60000); // Update daily records once a minute
 
 async function addStationMarker() {
   try {
