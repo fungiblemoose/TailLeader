@@ -1,4 +1,5 @@
 import os
+import time
 import aiosqlite
 from typing import Optional
 
@@ -17,13 +18,6 @@ CREATE INDEX IF NOT EXISTS idx_events_observed_at ON events(observed_at);
 CREATE INDEX IF NOT EXISTS idx_events_registration ON events(registration);
 CREATE INDEX IF NOT EXISTS idx_events_hex ON events(hex);
 
-CREATE TABLE IF NOT EXISTS daily_summary (
-  date TEXT NOT NULL, -- YYYY-MM-DD UTC
-  registration TEXT,
-  count_total INTEGER NOT NULL,
-  PRIMARY KEY (date, registration)
-);
-
 -- Virtual table for hex -> registration lookups
 CREATE TABLE IF NOT EXISTS aircraft_registry (
   hex TEXT PRIMARY KEY,
@@ -39,7 +33,13 @@ CREATE TABLE IF NOT EXISTS aircraft_registry (
 async def ensure_db(db_path: str):
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     async with aiosqlite.connect(db_path) as db:
+        # WAL lets the continuous poller writes and the dashboard reads proceed
+        # without blocking each other (default rollback journal serializes them).
+        await db.execute("PRAGMA journal_mode=WAL")
         await db.executescript(SCHEMA)
+        # daily_summary was written by rollup_daily but never read; drop the
+        # leftover table so existing installs reclaim the space.
+        await db.execute("DROP TABLE IF EXISTS daily_summary")
         await db.commit()
 
 async def insert_event(db_path: str, event: dict):
@@ -59,10 +59,6 @@ async def insert_event(db_path: str, event: dict):
 
 async def top_registrations(db_path: str, window: str, limit: int = 20):
     async with aiosqlite.connect(db_path) as db:
-        # For 30d/all, refresh daily_summary on-the-fly from recent events
-        if window in ("30d", "all"):
-            await rollup_daily(db_path)
-        
         if window == "24h":
             # last 24h: leaderboard of tail numbers only
             import time
@@ -102,12 +98,29 @@ async def top_registrations(db_path: str, window: str, limit: int = 20):
             async with db.execute(q, (limit,)) as cur:
                 return [dict(registration=tail, count=c) for tail, c in await cur.fetchall()]
 
+# All-time daily records change slowly but each computation is a full-table
+# scan (~5s on the Pi). The dashboard polls this once a minute, so cache the
+# result and only recompute every TTL seconds.
+_DAY_RECORDS_TTL = 900  # 15 minutes
+_day_records_cache = {"ts": 0.0, "limit": None, "data": None}
+
+
 async def day_records(db_path: str, limit: int = 10):
     """All-time daily leaderboards:
     - most_planes: days ranked by the number of distinct aircraft seen
     - most_types: days ranked by the number of distinct aircraft types seen
-    Dates are computed in UTC (YYYY-MM-DD) to match daily_summary.
+    Dates are computed in UTC (YYYY-MM-DD).
+
+    Result is cached in-process for _DAY_RECORDS_TTL seconds.
     """
+    now = time.time()
+    if (
+        _day_records_cache["data"] is not None
+        and _day_records_cache["limit"] == limit
+        and now - _day_records_cache["ts"] < _DAY_RECORDS_TTL
+    ):
+        return _day_records_cache["data"]
+
     async with aiosqlite.connect(db_path) as db:
         # Days with the most distinct aircraft (by hex)
         most_planes_q = (
@@ -131,7 +144,9 @@ async def day_records(db_path: str, limit: int = 10):
         async with db.execute(most_types_q, (limit,)) as cur:
             most_types = [dict(date=day, count=c) for day, c in await cur.fetchall()]
 
-    return {"most_planes": most_planes, "most_types": most_types}
+    result = {"most_planes": most_planes, "most_types": most_types}
+    _day_records_cache.update(ts=now, limit=limit, data=result)
+    return result
 
 async def recent_events(db_path: str, limit: int = 50):
     async with aiosqlite.connect(db_path) as db:
@@ -149,18 +164,6 @@ async def recent_events(db_path: str, limit: int = 50):
                 )
                 for r in rows
             ]
-
-async def rollup_daily(db_path: str):
-    async with aiosqlite.connect(db_path) as db:
-        # Recompute daily_summary from events
-        await db.execute("DELETE FROM daily_summary")
-        await db.execute(
-            "INSERT INTO daily_summary(date, registration, count_total) "
-            "SELECT strftime('%Y-%m-%d', datetime(observed_at, 'unixepoch')), registration, COUNT(*) "
-            "FROM events WHERE registration IS NOT NULL "
-            "GROUP BY strftime('%Y-%m-%d', datetime(observed_at, 'unixepoch')), registration"
-        )
-        await db.commit()
 
 async def store_registration(db_path: str, hex_code: str, registration: str, 
                            aircraft_type: Optional[str] = None,
