@@ -11,11 +11,8 @@ def normalize_text(text: Optional[str]) -> Optional[str]:
     """Normalize text by converting to uppercase, replacing punctuation with spaces, and stripping whitespace."""
     if not text:
         return None
-    # Convert to uppercase
     text = text.upper()
-    # Replace punctuation (except spaces) with spaces
     text = re.sub(r'[^\w\s]', ' ', text)
-    # Collapse multiple spaces
     text = re.sub(r'\s+', ' ', text)
     return text.strip()
 
